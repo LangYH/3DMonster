@@ -1,16 +1,21 @@
 ﻿#include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include <QMenu>
 #include <QFileDialog>
 #include <QFileInfo>
-#include "connectdatabasedialog.h"
-#include "ui_connectdatabasedialog.h"
-#include "crossbilateralfilterdialog.h"
-#include "ui_crossbilateralfilterdialog.h"
-#include "guidedfilterdialog.h"
-#include "ui_guidedfilterdialog.h"
 #include "databasemanager.h"
 #include "filters.h"
 #include <QElapsedTimer>
+#include "crossbilateralfilterdialog.h"
+#include "ui_crossbilateralfilterdialog.h"
+#include "connectdatabasedialog.h"
+#include "ui_connectdatabasedialog.h"
+#include "guidedfilterdialog.h"
+#include "ui_guidedfilterdialog.h"
+#include "imageresizedialog.h"
+#include "ui_imageresizedialog.h"
+#include <QMessageBox>
+
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -18,34 +23,44 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    informationOutput = new InformationPanel(this);
+
     lastPath = "/home/lang/Pictures/";
+    DIBRHelper = new ConvertDialogHelper();
+    depthMapGenerationWithKmeansDlg = NULL;
+    depthMapGenerationWithKNNDlg = NULL;
+    pyramidDlg = NULL;
+    patchesDlg = NULL;
 
     //bind signals to slots
     connect( ui->actionE_xit, SIGNAL(triggered()), this, SLOT(close()) );
     connect( ui->action_Remove_image, SIGNAL(triggered()), ui->ImView, SLOT(eraseTopImage()) );
+    connect( ui->actionAbout_Qt, SIGNAL(triggered()), qApp, SLOT(aboutQt()) );
 
     //set context menu
     ui->ImView->addAction( ui->action_Remove_image );
+
+    QMenu *DIBRMenu = new QMenu( this );
+    DIBRMenu->addAction( ui->actionSet_as_DIBR_image );
+    DIBRMenu->addAction( ui->actionSet_as_DIBR_depthmap );
+    ui->actionDIBR_operations->setMenu( DIBRMenu );
+    ui->ImView->addAction( ui->actionDIBR_operations );
+
     ui->ImView->setContextMenuPolicy( Qt::ActionsContextMenu );
+    //*****************************************************************
 
-    statusBarMessageLabel = new QLabel("Open image to start processing" );
-    QFont statusBarFont("Times", 12, QFont::Bold );
-    statusBarMessageLabel->setFont( statusBarFont );
-    statusBarMessageLabel->setMinimumSize( statusBarMessageLabel->sizeHint() );
-    statusBarMessageLabel->setAlignment( Qt::AlignLeft );
-    statusBarMessageLabel->setIndent( 3 );
+    QFont statusBarFont("Times", 15, QFont::Bold );
+    statusBar()->setFont( statusBarFont );
+    statusBar()->showMessage("Open image to start processing", 0 );
 
-    copyRightInfoLabel = new QLabel( "Copy right: LangYH");
-    copyRightInfoLabel ->setMinimumSize( copyRightInfoLabel ->sizeHint() );
-    copyRightInfoLabel ->setAlignment( Qt::AlignRight );
-    copyRightInfoLabel ->setIndent( 3 );
-
-    statusBar()->addWidget( statusBarMessageLabel, 1 );
-    statusBar()->addWidget( copyRightInfoLabel );
+    showMaximized();
+    informationOutput->move( this->width(), this->height() );
 }
 
 MainWindow::~MainWindow()
 {
+    delete informationOutput;
+    delete DIBRHelper;
     delete ui;
 }
 
@@ -70,7 +85,7 @@ void MainWindow::on_action_Open_triggered()
     if( !image.empty() )
     {
         ui->ImView->setPaintImage(image);
-        statusBarMessageLabel->setText( filename + QString( " loaded!"));
+        statusBar()->showMessage( filename + QString( " loaded!"), 3000 );
     }
 
 }
@@ -347,25 +362,24 @@ void MainWindow::on_actionObject_detect_triggered()
 
 void MainWindow::on_actionConnect_database_triggered()
 {
-    ConnectDatabaseDialog *dialog = new ConnectDatabaseDialog(this);
+    ConnectDatabaseDialog connectDatabaseDlg(this);
 
-    if( dialog->exec() ){
-        db = DatabaseManager::createConnection( dialog->ui->databaseTypeBox->currentText(),
-                                           dialog->ui->hostNameEdit->text(),
-                                           dialog->ui->databaseNameEdit->text(),
-                                           dialog->ui->userNameEdit->text(),
-                                           dialog->ui->passwordEdit->text() );
+    if( connectDatabaseDlg.exec() ){
+        db = DatabaseManager::createConnection( connectDatabaseDlg.ui->databaseTypeBox->currentText(),
+                                           connectDatabaseDlg.ui->hostNameEdit->text(),
+                                           connectDatabaseDlg.ui->databaseNameEdit->text(),
+                                           connectDatabaseDlg.ui->userNameEdit->text(),
+                                           connectDatabaseDlg.ui->passwordEdit->text() );
 
     }else{
         return;
     }
     if( !db.isOpen() ){
-        statusBarMessageLabel->setText(tr("Open database failed!" ));
+        statusBar()->showMessage( tr("Open database failed!" ), 3000 );
     } else {
-        statusBarMessageLabel->setText(tr( "Open database successfully!" ));
+        statusBar()->showMessage( tr( "Open database successfully!" ), 3000 );
     }
 
-    delete dialog;
 }
 
 void MainWindow::on_actionClose_database_triggered()
@@ -373,7 +387,7 @@ void MainWindow::on_actionClose_database_triggered()
     if( db.isOpen() ){
         db.close();
     }
-    statusBarMessageLabel->setText( tr( "Database closed!"));
+    statusBar()->showMessage( tr( "Database closed!"), 3000 );
 }
 
 void MainWindow::on_actionCross_bilateral_triggered()
@@ -384,13 +398,13 @@ void MainWindow::on_actionCross_bilateral_triggered()
     Mat im = ui->ImView->getCurrentImage();
     Mat mask = ui->ImView->getSecondImage();
     if( im.empty() || mask.empty() ){
-        statusBarMessageLabel->setText( tr("You must have two image for bilateral filter!"));
+        statusBar()->showMessage( tr("You must have two image for bilateral filter!") );
         return;
     }
 
-    CrossBilateralFilterDialog *dialog = new CrossBilateralFilterDialog(this);
+    CrossBilateralFilterDialog crossBilateralFilterDlg(this);
 
-    if( dialog->exec() ){
+    if( crossBilateralFilterDlg.exec() ){
        if( im.channels() == 3 ){
             cvtColor( im, im, CV_BGR2GRAY );
         }
@@ -398,18 +412,17 @@ void MainWindow::on_actionCross_bilateral_triggered()
             cvtColor( mask, mask, CV_BGR2GRAY );
         }
         Mat result;
-        int wsize = dialog->ui->wsizeBox->value();
-        double sigma_space = dialog->ui->sigmaSpaceBox->value();
-        double sigma_value = dialog->ui->sigmaValueBox->value();
+        int wsize = crossBilateralFilterDlg.ui->wsizeBox->value();
+        double sigma_space = crossBilateralFilterDlg.ui->sigmaSpaceBox->value();
+        double sigma_value = crossBilateralFilterDlg.ui->sigmaValueBox->value();
         Filters filters;
         filters.crossBilateralFilter( im, mask, result, wsize, sigma_space, sigma_value );
         ui->ImView->setPaintImage( result );
-        statusBarMessageLabel->setText( tr("cross bilateral filtering elapsed with: ")
-                                        + QString::number( timer.elapsed() / 1000.0 ) + " seconds\n");
+        statusBar()->showMessage( tr("cross bilateral filtering elapsed with: ")
+                                        + QString::number( timer.elapsed() / 1000.0 ) + " seconds\n", 3000 );
 
     }
 
-    delete dialog;
 }
 
 void MainWindow::on_actionGuided_Filter_triggered()
@@ -420,12 +433,13 @@ void MainWindow::on_actionGuided_Filter_triggered()
     Mat im = ui->ImView->getCurrentImage();
     Mat mask = ui->ImView->getSecondImage();
     if( im.empty() || mask.empty() ){
-        statusBarMessageLabel->setText( tr("You must have two image for bilateral filter!"));
+        statusBar()->showMessage( tr("You must have two image for bilateral filter!") );
         return;
     }
 
-    GuidedFilterDialog *dialog = new GuidedFilterDialog(this);
-    if( dialog->exec() ){
+    GuidedFilterDialog guidedFilterDlg(this);
+
+    if( guidedFilterDlg.exec() ){
         if( im.channels() == 3 ){
             cvtColor( im, im, CV_BGR2GRAY );
         }
@@ -433,20 +447,136 @@ void MainWindow::on_actionGuided_Filter_triggered()
             cvtColor( mask, mask, CV_BGR2GRAY );
         }
         Mat result;
-        int wsize = dialog->ui->wsizeBox->value();
-        double regularizationTerm = dialog->ui->regularizationSpinBox->value();
+        int wsize = guidedFilterDlg.ui->wsizeBox->value();
+        double regularizationTerm = guidedFilterDlg.ui->regularizationSpinBox->value();
         Filters filters;
         filters.guidedFilter( im, mask, result, wsize, regularizationTerm );
         ui->ImView->setPaintImage( result );
 
-        statusBarMessageLabel->setText( tr("guided filtering elapsed with: ") +
-                QString::number( timer.elapsed() / 1000.0 ) + " seconds\n" );
+        statusBar()->showMessage( tr("guided filtering elapsed with: ") +
+                QString::number( timer.elapsed() / 1000.0 ) + " seconds\n", 3000  );
     }
-
 
 }
 
 void MainWindow::on_actionDIBR_triggered()
 {
+    DIBRHelper->process();
+
+    ui->ImView->setPaintImage( DIBRHelper->getLastResult() );
+}
+
+void MainWindow::on_actionSet_as_DIBR_image_triggered()
+{
+    if( ui->ImView->isEmpty() )
+        return;
+
+    DIBRHelper->setInputImage( ui->ImView->getCurrentImage() );
+    statusBar()->showMessage( tr("DIBR image set!"), 3000 );
+}
+
+void MainWindow::on_actionSet_as_DIBR_depthmap_triggered()
+{
+    if( ui->ImView->isEmpty() )
+        return;
+
+    DIBRHelper->setDepthImage( ui->ImView->getCurrentImage() );
+    statusBar()->showMessage( tr("DIBR depthmap set!"), 3000 );
+}
+
+void MainWindow::on_actionDepthMap_generation_kmeans_triggered()
+{
+    if( !depthMapGenerationWithKmeansDlg ){
+        depthMapGenerationWithKmeansDlg = new DepthMapGenerationWithKmeansDialog(this);
+        depthMapGenerationWithKmeansDlg->setMainWindowUi( ui );
+        depthMapGenerationWithKmeansDlg->setOutputPanel( informationOutput );
+    }
+
+    depthMapGenerationWithKmeansDlg->move( ui->ImView->pos() );
+    depthMapGenerationWithKmeansDlg->show();
+    depthMapGenerationWithKmeansDlg->raise();
+    depthMapGenerationWithKmeansDlg->activateWindow();
+
+}
+
+void MainWindow::on_actionAbout_triggered()
+{
+    QMessageBox::about( this, tr("About 3DMonster" ),
+                        tr( "<h2>3DMonster 1.1</h2>"
+                            "<p>Copyright &copy;LangYH."
+                            "<p>3DMonster is an image processing program,mainly "
+                            "used in 2D-3D conversion,based on my graduated student project"));
+}
+
+void MainWindow::on_actionDepthMap_generation_kNN_triggered()
+{
+    if( !depthMapGenerationWithKNNDlg ){
+        depthMapGenerationWithKNNDlg = new DepthMapGenerationWithKNNDialog(this);
+        depthMapGenerationWithKNNDlg->setMainWindowUi( ui );
+        depthMapGenerationWithKNNDlg->setOutputPanel( informationOutput );
+    }
+
+    depthMapGenerationWithKNNDlg->show();
+    depthMapGenerationWithKNNDlg->raise();
+    depthMapGenerationWithKNNDlg->activateWindow();
+
+}
+
+void MainWindow::on_actionDepthMap_generation_relative_height_triggered()
+{
+    QElapsedTimer timer;
+    timer.start();
+    DIBRHelper->setInputImage( ui->ImView->getCurrentImage() );
+    DIBRHelper->generateDepthMapUsingRelativeHeightCue();
+    ui->ImView->setPaintImage( DIBRHelper->getLastDepthMapResult() );
+    QString info = tr( "relative height cue algorithm elapsed with " ) + QString::number( timer.elapsed() / 1000.0 )
+            + tr( " s" );
+    statusBar()->showMessage( info );
+
+}
+
+void MainWindow::on_actionResize_image_triggered()
+{
+    if( ui->ImView->isEmpty() ){
+        return;
+    }
+    Mat original_image = ui->ImView->getCurrentImage();
+    ImageResizeDialog dialog(this);
+    dialog.ui->widthBox->setValue( original_image.cols );
+    dialog.ui->heightBox->setValue( original_image.rows );
+    if( dialog.exec() ){
+        Mat image;
+        cv::resize( original_image, image,
+                    cv::Size(dialog.ui->widthBox->value(), dialog.ui->heightBox->value() ) );
+        ui->ImView->setPaintImage( image );
+    }
+
+}
+
+void MainWindow::on_actionPyramid_triggered()
+{
+    if( !pyramidDlg ){
+        pyramidDlg = new PyramidDialog(this);
+        pyramidDlg->setMainWindowUi( ui );
+        pyramidDlg->setOutputPanel( informationOutput );
+    }
+
+    pyramidDlg->show();
+    pyramidDlg->raise();
+    pyramidDlg->activateWindow();
+}
+
+void MainWindow::on_actionPatches_triggered()
+{
+    if( !patchesDlg ){
+        patchesDlg = new PatchesDialog(this);
+        patchesDlg->setMainWindowUi(ui);
+        patchesDlg->setOutputPanel( informationOutput );
+        patchesDlg->setDatabase( &db );
+    }
+
+    patchesDlg->show();
+    patchesDlg->raise();
+    patchesDlg->activateWindow();
 
 }

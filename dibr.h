@@ -16,7 +16,7 @@ public:
     Mat creatRightImage(const Mat image, Mat const right_movement );
     Mat creatLeftImage(const Mat image, Mat const left_movement );
     Mat creatRedBlueImage( Mat  const leftImage, Mat const rightImage );
-    static Mat execute( Mat const image, Mat const depthMap);
+    Mat execute( Mat const image, Mat const depthMap);
     void fillImagehole(Mat &Input );
     void depthMapNormalized( Mat &depthMap );
 

@@ -55,9 +55,12 @@ void ConvertDialogHelper::process()
 {
     if( image.empty() || depthImage.empty() )
     {
-        QMessageBox::information( NULL, "Empty image or depthmap", "You haven't load image or depth information" );
+        QMessageBox::information( NULL, "Empty image or depthmap",
+                                  "You haven't set image or depth information" );
         return;
     }
+    //imshow( "image", image );waitKey(0);
+    //imshow( "depth", depthImage );waitKey(0);
 
     if( image.size() != depthImage.size())
     {

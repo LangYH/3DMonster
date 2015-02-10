@@ -16,6 +16,8 @@ Mat DIBR::execute( Mat const image, Mat const depthMap)
 {
     //execute the DIBR algorithm , return a Red-blue 3D image
     Mat currentDepthMap = depthMap * MAX_DEPTH + VIEW_DISTANCE;
+    //imshow( "image", image );waitKey(0);
+    //imshow( "depth", depthMap);waitKey(0);
 
     Mat right_movement = ( 1. - VIEW_DISTANCE / currentDepthMap ) *( EYES_INTERVAL / 2. ) / DISPLAYER_INTERVAL;
     Mat left_movement = -right_movement;

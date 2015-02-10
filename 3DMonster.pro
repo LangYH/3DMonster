@@ -32,7 +32,13 @@ SOURCES += main.cpp\
     connectdatabasedialog.cpp \
     crossbilateralfilterdialog.cpp \
     guidedfilterdialog.cpp \
-    convertdialoghelper.cpp
+    convertdialoghelper.cpp \
+    depthmapgenerationwithkmeansdialog.cpp \
+    informationpanel.cpp \
+    depthmapgenerationwithknndialog.cpp \
+    imageresizedialog.cpp \
+    pyramiddialog.cpp \
+    patchesdialog.cpp
 
 HEADERS  += mainwindow.h \
     databasemanager.h \
@@ -52,12 +58,24 @@ HEADERS  += mainwindow.h \
     connectdatabasedialog.h \
     crossbilateralfilterdialog.h \
     guidedfilterdialog.h \
-    convertdialoghelper.h
+    convertdialoghelper.h \
+    depthmapgenerationwithkmeansdialog.h \
+    informationpanel.h \
+    depthmapgenerationwithknndialog.h \
+    imageresizedialog.h \
+    pyramiddialog.h \
+    patchesdialog.h
 
 FORMS    += mainwindow.ui \
     connectdatabasedialog.ui \
     crossbilateralfilterdialog.ui \
-    guidedfilterdialog.ui
+    guidedfilterdialog.ui \
+    depthmapgenerationwithkmeansdialog.ui \
+    informationpanel.ui \
+    depthmapgenerationwithknndialog.ui \
+    imageresizedialog.ui \
+    pyramiddialog.ui \
+    patchesdialog.ui
 
 INCLUDEPATH += /usr/local/include/opencv
 LIBS += \

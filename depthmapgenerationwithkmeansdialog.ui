@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>DepthMapGenerationWithKmeansDialog</class>
+ <widget class="QDialog" name="DepthMapGenerationWithKmeansDialog">
+  <property name="windowModality">
+   <enum>Qt::NonModal</enum>
+  </property>
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>194</width>
+    <height>111</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Generate depthMap using kmeans</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QLabel" name="label">
+     <property name="font">
+      <font>
+       <pointsize>13</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="text">
+      <string>Centroids:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QSpinBox" name="kmeansCentroidsBox">
+     <property name="value">
+      <number>12</number>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="2">
+    <widget class="QPushButton" name="kmeansTrainButton">
+     <property name="text">
+      <string>Train</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QPushButton" name="cancleButton">
+     <property name="text">
+      <string>&amp;Cancle</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QPushButton" name="generateButton">
+     <property name="text">
+      <string>Generate</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>kmeansCentroidsBox</tabstop>
+  <tabstop>generateButton</tabstop>
+  <tabstop>kmeansTrainButton</tabstop>
+  <tabstop>cancleButton</tabstop>
+ </tabstops>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>cancleButton</sender>
+   <signal>clicked()</signal>
+   <receiver>DepthMapGenerationWithKmeansDialog</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>55</x>
+     <y>92</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>5</x>
+     <y>72</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

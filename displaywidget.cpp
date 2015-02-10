@@ -41,14 +41,14 @@ bool DisplayWidget::setPaintImage( Mat const &sourceImage )
     }
     convertScaleAbs( originalImage, originalImage );//convert image to uint8 type
     originalImage.copyTo( paintImage );
-    convertScaleAbs( paintImage, paintImage );
 
     originalImageList.push_back( originalImage );
     paintImageList.push_back( paintImage );
     scaleList.push_back( 1.0 );
 
     QPoint drawPoint;
-    drawPoint = QPoint( ( frameSize().width() - sourceImage.cols )/2, ( frameSize().height() - sourceImage.rows ) /2 );
+    drawPoint = QPoint( ( frameSize().width() - sourceImage.cols )/2,
+                        ( frameSize().height() - sourceImage.rows ) /2 );
     drawPointList.push_back( drawPoint );
 
     update();
@@ -158,7 +158,9 @@ void DisplayWidget::wheelEvent(QWheelEvent *event)
         }
     }
 
-    cv::resize( *originalImageList.rbegin(), *paintImageList.rbegin(), Size(int( originalImageList.rbegin()->cols * (*scaleList.rbegin()) ), int( originalImageList.rbegin()-> rows * (*scaleList.rbegin()) ) ) );
+    cv::resize( *originalImageList.rbegin(), *paintImageList.rbegin(),
+                Size(int( originalImageList.rbegin()->cols * (*scaleList.rbegin()) ),
+                     int( originalImageList.rbegin()->rows * (*scaleList.rbegin()) ) ) );
     *drawPointList.rbegin() -= movement;
 
 

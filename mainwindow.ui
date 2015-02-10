@@ -467,12 +467,22 @@
     <property name="title">
      <string>3DConversion</string>
     </property>
+    <widget class="QMenu" name="menuDepthMap_generatiron">
+     <property name="title">
+      <string>DepthMap generatiron</string>
+     </property>
+     <addaction name="actionDepthMap_generation_kmeans"/>
+     <addaction name="actionDepthMap_generation_kNN"/>
+     <addaction name="actionDepthMap_generation_relative_height"/>
+    </widget>
     <addaction name="actionDIBR"/>
+    <addaction name="menuDepthMap_generatiron"/>
    </widget>
    <widget class="QMenu" name="menuVisualWord">
     <property name="title">
      <string>VisualWord</string>
     </property>
+    <addaction name="actionPatches"/>
    </widget>
    <widget class="QMenu" name="menuFeatures">
     <property name="title">
@@ -507,7 +517,22 @@
     <addaction name="actionCross_bilateral"/>
     <addaction name="actionGuided_Filter"/>
    </widget>
+   <widget class="QMenu" name="menuAbout">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionAbout"/>
+    <addaction name="actionAbout_Qt"/>
+   </widget>
+   <widget class="QMenu" name="menuImgProc">
+    <property name="title">
+     <string>ImgProc</string>
+    </property>
+    <addaction name="actionResize_image"/>
+    <addaction name="actionPyramid"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuImgProc"/>
    <addaction name="menu3DConversion"/>
    <addaction name="menuVisualWord"/>
    <addaction name="menuFeatures"/>
@@ -515,6 +540,7 @@
    <addaction name="menuDatabase"/>
    <addaction name="menuMisc"/>
    <addaction name="menuTest"/>
+   <addaction name="menuAbout"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -603,6 +629,70 @@
   <action name="actionDIBR">
    <property name="text">
     <string>DIBR</string>
+   </property>
+  </action>
+  <action name="actionDIBR_operations">
+   <property name="text">
+    <string>DIBR operations</string>
+   </property>
+   <property name="toolTip">
+    <string>operations for depth-image based rendering</string>
+   </property>
+  </action>
+  <action name="actionSet_as_DIBR_image">
+   <property name="text">
+    <string>set as DIBR image</string>
+   </property>
+  </action>
+  <action name="actionSet_as_DIBR_depthmap">
+   <property name="text">
+    <string>set as DIBR depthmap</string>
+   </property>
+  </action>
+  <action name="actionDepthMap_generation_kmeans">
+   <property name="text">
+    <string>Kmeans</string>
+   </property>
+   <property name="toolTip">
+    <string>generation depth for target image using kmeans algorithm</string>
+   </property>
+  </action>
+  <action name="actionDepthMap_generation_kNN">
+   <property name="text">
+    <string>KNN</string>
+   </property>
+   <property name="toolTip">
+    <string>generate depthMap for target image using kNN algorithm</string>
+   </property>
+  </action>
+  <action name="actionDepthMap_generation_relative_height">
+   <property name="text">
+    <string>Relative height</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About</string>
+   </property>
+  </action>
+  <action name="actionAbout_Qt">
+   <property name="text">
+    <string>About Qt</string>
+   </property>
+  </action>
+  <action name="actionResize_image">
+   <property name="text">
+    <string>Resize image</string>
+   </property>
+  </action>
+  <action name="actionPyramid">
+   <property name="text">
+    <string>Pyramid</string>
+   </property>
+  </action>
+  <action name="actionPatches">
+   <property name="text">
+    <string>Patches</string>
    </property>
   </action>
  </widget>
