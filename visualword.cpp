@@ -6,7 +6,7 @@ VisualWord::VisualWord()
 
 void VisualWord::train()
 {
-    //---------Step1: Initailization( mainly use kmeans )-----------------------------
+    //---------Step1: Initailization( kmeans clustering )-----------------------------
     QStringList D1, D2, N1, N2;
     getDataForTraining( D1, D2, N1, N2 );
 

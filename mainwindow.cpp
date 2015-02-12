@@ -580,3 +580,8 @@ void MainWindow::on_actionPatches_triggered()
     patchesDlg->activateWindow();
 
 }
+
+void MainWindow::on_actionVisual_Word_Training_triggered()
+{
+
+}

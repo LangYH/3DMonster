@@ -76,6 +76,8 @@ private slots:
 
     void on_actionPatches_triggered();
 
+    void on_actionVisual_Word_Training_triggered();
+
 private:
     Ui::MainWindow *ui;
     DepthMapGenerationWithKmeansDialog *depthMapGenerationWithKmeansDlg;

@@ -38,7 +38,8 @@ SOURCES += main.cpp\
     depthmapgenerationwithknndialog.cpp \
     imageresizedialog.cpp \
     pyramiddialog.cpp \
-    patchesdialog.cpp
+    patchesdialog.cpp \
+    visualworddialog.cpp
 
 HEADERS  += mainwindow.h \
     databasemanager.h \
@@ -64,7 +65,8 @@ HEADERS  += mainwindow.h \
     depthmapgenerationwithknndialog.h \
     imageresizedialog.h \
     pyramiddialog.h \
-    patchesdialog.h
+    patchesdialog.h \
+    visualworddialog.h
 
 FORMS    += mainwindow.ui \
     connectdatabasedialog.ui \
@@ -75,7 +77,8 @@ FORMS    += mainwindow.ui \
     depthmapgenerationwithknndialog.ui \
     imageresizedialog.ui \
     pyramiddialog.ui \
-    patchesdialog.ui
+    patchesdialog.ui \
+    visualworddialog.ui
 
 INCLUDEPATH += /usr/local/include/opencv
 LIBS += \
