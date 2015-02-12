@@ -1,4 +1,4 @@
-#include "visualworddialog.h"
+﻿#include "visualworddialog.h"
 #include "ui_visualworddialog.h"
 
 VisualWordDialog::VisualWordDialog(QWidget *parent) :
@@ -11,4 +11,9 @@ VisualWordDialog::VisualWordDialog(QWidget *parent) :
 VisualWordDialog::~VisualWordDialog()
 {
     delete ui;
+}
+
+void VisualWordDialog::on_loadDataButton_clicked()
+{
+
 }

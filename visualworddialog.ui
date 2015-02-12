@@ -42,7 +42,7 @@
   <widget class="QGroupBox" name="groupBox">
    <property name="geometry">
     <rect>
-     <x>20</x>
+     <x>30</x>
      <y>10</y>
      <width>461</width>
      <height>111</height>
@@ -54,9 +54,9 @@
    <widget class="QPushButton" name="loadDataButton">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>20</y>
-      <width>99</width>
+      <x>0</x>
+      <y>30</y>
+      <width>131</width>
       <height>27</height>
      </rect>
     </property>
@@ -67,14 +67,37 @@
    <widget class="QPushButton" name="kmeansClusteringButton">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>50</y>
+      <x>0</x>
+      <y>70</y>
       <width>151</width>
       <height>27</height>
      </rect>
     </property>
     <property name="text">
      <string>Kmeans Clustering</string>
+    </property>
+   </widget>
+   <widget class="QSpinBox" name="spinBox">
+    <property name="geometry">
+     <rect>
+      <x>240</x>
+      <y>70</y>
+      <width>81</width>
+      <height>27</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>160</x>
+      <y>80</y>
+      <width>81</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Centroids:</string>
     </property>
    </widget>
   </widget>
@@ -84,12 +107,35 @@
      <x>20</x>
      <y>130</y>
      <width>571</width>
-     <height>80</height>
+     <height>121</height>
     </rect>
    </property>
    <property name="title">
     <string>Training:</string>
    </property>
+   <widget class="QLabel" name="label_2">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>30</y>
+      <width>81</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Iterations:</string>
+    </property>
+   </widget>
+   <widget class="QSpinBox" name="spinBox_2">
+    <property name="geometry">
+     <rect>
+      <x>100</x>
+      <y>30</y>
+      <width>81</width>
+      <height>27</height>
+     </rect>
+    </property>
+   </widget>
   </widget>
  </widget>
  <resources/>
