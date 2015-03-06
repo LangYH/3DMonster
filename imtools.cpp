@@ -10,7 +10,7 @@ imtools::imtools()
 void imtools::matrixNormalize( Mat const &srcMat, Mat &dstMat )
 {
     Mat temp;
-    srcMat.convertTo( temp, CV_64FC1 );
+    srcMat.convertTo( temp, CV_32FC1 );
     double minVal, maxVal;
     minMaxLoc( temp, &minVal, &maxVal );
     dstMat = (temp-minVal) / ( maxVal - minVal );
@@ -18,7 +18,7 @@ void imtools::matrixNormalize( Mat const &srcMat, Mat &dstMat )
 
 void imtools::weightsNormalize(Mat &matrix)
 {
-    matrix.convertTo( matrix, CV_64FC1 );
+    matrix.convertTo( matrix, CV_32FC1 );
     matrix /= sum( matrix )[0];
 }
 
@@ -51,7 +51,7 @@ void imtools::getDepthMapsWithIndexes( Mat const &indexes, QStringList const &de
 
 void imtools::fuseDepthMaps( std::vector<Mat> const &depthMaps, const Mat &weights, Mat &fusedDepthMap)
 {
-    fusedDepthMap.create( depthMaps[0].size(), CV_64FC1);
+    fusedDepthMap.create( depthMaps[0].size(), CV_32FC1);
     fusedDepthMap = 0.0;
 
     for( int i = 0; i < int(depthMaps.size()); i++ ){
@@ -63,27 +63,22 @@ void imtools::fuseDepthMaps( std::vector<Mat> const &depthMaps, const Mat &weigh
 }
 
 void imtools::computeHOGDescriptorsMat(Mat &descriptorMat,
-                                       const QStringList &imPath , const HOGDescriptor *hogDesr)
+                                       const QStringList &imPath ,
+                                       const HOGDescriptor *hogDesr)
 {
     //compute all descriptors of training images
-    std::vector< std::vector<float> > imDescriptors;
-    foreach (QString fullImPath, imPath ) {
-        //for each file in imPath
-        Mat image = imread( fullImPath.toLocal8Bit().data(), CV_LOAD_IMAGE_GRAYSCALE );
-        std::vector<float> descr;
-        hogDesr->compute( image, descr, Size(0, 0 ), Size( 0, 0 ) );
-        imDescriptors.push_back( descr );
-    }
-   //---------------------------------------------
-
-   //transfer the data in vector<vector<float>> to a big Mat descriptorMat
-    descriptorMat.create( imPath.size(), imDescriptors[0].size(), CV_64FC1 );
+    //store in descriptorMat, for each row of it is a descriptor of one image
+    descriptorMat.create( imPath.size(), hogDesr->getDescriptorSize(), CV_32FC1 );
     int nr = descriptorMat.rows;
     int nc = descriptorMat.cols;
     for( int j=0; j<nr; j++ ){
-        double *data = descriptorMat.ptr<double>(j);
+        float *data = descriptorMat.ptr<float>(j);
+        Mat image = imread( imPath[j].toLocal8Bit().data(),
+                            CV_LOAD_IMAGE_GRAYSCALE );
+        std::vector<float> descr;
+        hogDesr->compute( image, descr, Size(0, 0 ), Size( 0, 0 ) );
         for( int i = 0; i < nc; i++ ){
-            *data++ = imDescriptors[j][i];
+            *data++ = descr[i];
         }
     }
 

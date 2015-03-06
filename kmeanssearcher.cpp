@@ -66,7 +66,7 @@ void kmeansSearcher::train()
         trainImageWidth = depthMaps[0].cols;
 
         for( int i = 0; i < nbr_classes; i++ ){
-            Mat empty( trainImageHeight, trainImageWidth, CV_64FC1, Scalar(0) );
+            Mat empty( trainImageHeight, trainImageWidth, CV_32FC1, Scalar(0) );
             k_depthMaps.push_back( empty );
         }
 
@@ -143,9 +143,9 @@ int kmeansSearcher::vq( Mat const &featureVector )
     //for each row of descriptorMat, substract by targetDescr and square
     //( a - b )^2
     Mat feature;
-    featureVector.convertTo( feature, CV_64FC1 );
-    centroids.convertTo( centroids, CV_64FC1 );
-    Mat diffMat( nr, nc, CV_64FC1 );
+    featureVector.convertTo( feature, CV_32FC1 );
+    centroids.convertTo( centroids, CV_32FC1 );
+    Mat diffMat( nr, nc, CV_32FC1 );
     for( int i = 0; i < nr; i++ ){
         const double *data_feature = feature.ptr<double>(0);
         double *data_centroids = centroids.ptr<double>(i);
@@ -157,7 +157,7 @@ int kmeansSearcher::vq( Mat const &featureVector )
     }
 
     //squareroot of summation of each row: ( a11 + a12 + a13 ..)^1/2
-    Mat sumAndSqrtVector( nr, 1, CV_64FC1 );
+    Mat sumAndSqrtVector( nr, 1, CV_32FC1 );
     for( int i = 0; i < nr; i++ ){
         std::cout << sum( diffMat.row(i) )[0]  << std::endl;
         sumAndSqrtVector.at<double>( i, 0 ) = std::sqrt( sum( diffMat.row(i) )[0] );

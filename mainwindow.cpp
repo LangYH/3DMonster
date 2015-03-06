@@ -29,6 +29,7 @@ MainWindow::MainWindow(QWidget *parent) :
     DIBRHelper = new ConvertDialogHelper();
     depthMapGenerationWithKmeansDlg = NULL;
     depthMapGenerationWithKNNDlg = NULL;
+    visualWordDlg = NULL;
     pyramidDlg = NULL;
     patchesDlg = NULL;
 
@@ -51,7 +52,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QFont statusBarFont("Times", 15, QFont::Bold );
     statusBar()->setFont( statusBarFont );
-    statusBar()->showMessage("Open image to start processing", 0 );
+    statusBar()->showMessage("Open image to start processing" );
 
     showMaximized();
     informationOutput->move( this->width(), this->height() );
@@ -85,7 +86,7 @@ void MainWindow::on_action_Open_triggered()
     if( !image.empty() )
     {
         ui->ImView->setPaintImage(image);
-        statusBar()->showMessage( filename + QString( " loaded!"), 3000 );
+        statusBar()->showMessage( filename + QString( " loaded!") );
     }
 
 }
@@ -143,9 +144,9 @@ void MainWindow::on_actionSVM_triggered()
             Mat sampleMat = ( Mat_<float>( 1, 2 ) << j, i );
             float response = SVM.predict( sampleMat );
 
-            if( response == 1 )
+            if( response == 1.0 )
                 image.at<Vec3b>( i, j ) = green;
-            else if( response == -1 )
+            else if( response == -1.0 )
                 image.at<Vec3b>( i, j ) = blue;
         }
     }
@@ -155,7 +156,21 @@ void MainWindow::on_actionSVM_triggered()
     circle( image, Point( 501, 10 ), 5, Scalar( 0, 0, 0 ), thickness, lineType );
     circle( image, Point(255,10  ), 5, Scalar(255,255,255 ), thickness, lineType );
     circle( image, Point( 501, 255 ), 5, Scalar( 255,255,255), thickness, lineType );
-    circle( image, Point(10, 501  ), 5, Scalar( 255,255,255), thickness, lineType );
+    circle( image, Point( 10, 501  ), 5, Scalar( 255,255,255), thickness, lineType );
+
+    //test
+    Mat sample1 = ( Mat_<float>(1,2) << 510, 10 );
+    Mat sample2 = ( Mat_<float>(1,2) << 520, 10 );
+    Mat sample3 = ( Mat_<float>(1,2) << 180, 10 );
+    Mat sample4 = ( Mat_<float>(1,2) << 190, 10 );
+    float score1 = SVM.predict( sample1, true );
+    std::cout << "The score of ( 510, 10 ) is : " << score1 << std::endl;
+    float score2 = SVM.predict( sample2, true );
+    std::cout << "The score of ( 520, 10 ) is : " << score2 << std::endl;
+    float score3 = SVM.predict( sample3, true );
+    std::cout << "The score of ( 180, 10 ) is : " << score3 << std::endl;
+    float score4 = SVM.predict( sample4, true );
+    std::cout << "The score of ( 190, 10 ) is : " << score4 << std::endl;
 
     //show support vectors
     thickness = 2;
@@ -164,7 +179,7 @@ void MainWindow::on_actionSVM_triggered()
 
     for( int i = 0; i< c; i++ ){
         const float* v = SVM.get_support_vector(i);
-        circle( image, Point( (int)v[0], (int)v[1] ), 6, Scalar( 128,128,128), thickness, lineType );
+        circle( image, Point( (int)v[0], (int)v[1] ), 6, Scalar( 0, 0, 255), thickness, lineType );
     }
 
     ui->ImView->setPaintImage( image );
@@ -375,9 +390,9 @@ void MainWindow::on_actionConnect_database_triggered()
         return;
     }
     if( !db.isOpen() ){
-        statusBar()->showMessage( tr("Open database failed!" ), 3000 );
+        statusBar()->showMessage( tr("Open database failed!" ) );
     } else {
-        statusBar()->showMessage( tr( "Open database successfully!" ), 3000 );
+        statusBar()->showMessage( tr( "Open database successfully!" ) );
     }
 
 }
@@ -387,7 +402,7 @@ void MainWindow::on_actionClose_database_triggered()
     if( db.isOpen() ){
         db.close();
     }
-    statusBar()->showMessage( tr( "Database closed!"), 3000 );
+    statusBar()->showMessage( tr( "Database closed!") );
 }
 
 void MainWindow::on_actionCross_bilateral_triggered()
@@ -419,7 +434,7 @@ void MainWindow::on_actionCross_bilateral_triggered()
         filters.crossBilateralFilter( im, mask, result, wsize, sigma_space, sigma_value );
         ui->ImView->setPaintImage( result );
         statusBar()->showMessage( tr("cross bilateral filtering elapsed with: ")
-                                        + QString::number( timer.elapsed() / 1000.0 ) + " seconds\n", 3000 );
+                                        + QString::number( timer.elapsed() / 1000.0 ) + " seconds\n" );
 
     }
 
@@ -454,7 +469,7 @@ void MainWindow::on_actionGuided_Filter_triggered()
         ui->ImView->setPaintImage( result );
 
         statusBar()->showMessage( tr("guided filtering elapsed with: ") +
-                QString::number( timer.elapsed() / 1000.0 ) + " seconds\n", 3000  );
+                QString::number( timer.elapsed() / 1000.0 ) + " seconds\n" );
     }
 
 }
@@ -472,7 +487,7 @@ void MainWindow::on_actionSet_as_DIBR_image_triggered()
         return;
 
     DIBRHelper->setInputImage( ui->ImView->getCurrentImage() );
-    statusBar()->showMessage( tr("DIBR image set!"), 3000 );
+    statusBar()->showMessage( tr("DIBR image set!") );
 }
 
 void MainWindow::on_actionSet_as_DIBR_depthmap_triggered()
@@ -481,7 +496,7 @@ void MainWindow::on_actionSet_as_DIBR_depthmap_triggered()
         return;
 
     DIBRHelper->setDepthImage( ui->ImView->getCurrentImage() );
-    statusBar()->showMessage( tr("DIBR depthmap set!"), 3000 );
+    statusBar()->showMessage( tr("DIBR depthmap set!") );
 }
 
 void MainWindow::on_actionDepthMap_generation_kmeans_triggered()
@@ -583,5 +598,15 @@ void MainWindow::on_actionPatches_triggered()
 
 void MainWindow::on_actionVisual_Word_Training_triggered()
 {
+    if( !visualWordDlg ){
+        visualWordDlg = new VisualWordDialog(this);
+        visualWordDlg->setMainWindowUi( ui );
+        visualWordDlg->setDatabase( &db );
+    }
+
+    visualWordDlg->show();
+    visualWordDlg->raise();
+    visualWordDlg->activateWindow();
+
 
 }

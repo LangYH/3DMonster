@@ -15,6 +15,7 @@
 #include "convertdialoghelper.h"
 #include "depthmapgenerationwithkmeansdialog.h"
 #include "depthmapgenerationwithknndialog.h"
+#include "visualworddialog.h"
 #include "pyramiddialog.h"
 #include "patchesdialog.h"
 #include "informationpanel.h"
@@ -82,6 +83,7 @@ private:
     Ui::MainWindow *ui;
     DepthMapGenerationWithKmeansDialog *depthMapGenerationWithKmeansDlg;
     DepthMapGenerationWithKNNDialog *depthMapGenerationWithKNNDlg;
+    VisualWordDialog *visualWordDlg;
     PyramidDialog *pyramidDlg;
     PatchesDialog *patchesDlg;
     InformationPanel *informationOutput;

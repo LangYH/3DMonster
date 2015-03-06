@@ -29,9 +29,6 @@ void PatchesDialog::setOutputPanel( InformationPanel *panel )
 void PatchesDialog::setDatabase( QSqlDatabase *database )
 {
     db = database;
-    if( patchExtracter != NULL ){
-        delete patchExtracter;
-    }
 }
 
 void PatchesDialog::on_patchSampleButton_clicked()

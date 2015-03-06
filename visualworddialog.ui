@@ -6,137 +6,166 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>692</width>
-    <height>536</height>
+    <width>594</width>
+    <height>447</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>VisualWord</string>
   </property>
-  <widget class="QDialogButtonBox" name="buttonBox">
-   <property name="geometry">
-    <rect>
-     <x>270</x>
-     <y>480</y>
-     <width>341</width>
-     <height>32</height>
-    </rect>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
-   </property>
-   <property name="standardButtons">
-    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-   </property>
-  </widget>
-  <widget class="QTextBrowser" name="textBrowser">
-   <property name="geometry">
-    <rect>
-     <x>130</x>
-     <y>280</y>
-     <width>431</width>
-     <height>192</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QGroupBox" name="groupBox">
-   <property name="geometry">
-    <rect>
-     <x>30</x>
-     <y>10</y>
-     <width>461</width>
-     <height>111</height>
-    </rect>
-   </property>
-   <property name="title">
-    <string>Initialization:</string>
-   </property>
-   <widget class="QPushButton" name="loadDataButton">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>30</y>
-      <width>131</width>
-      <height>27</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>LoadData</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="kmeansClusteringButton">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>70</y>
-      <width>151</width>
-      <height>27</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Kmeans Clustering</string>
-    </property>
-   </widget>
-   <widget class="QSpinBox" name="spinBox">
-    <property name="geometry">
-     <rect>
-      <x>240</x>
-      <y>70</y>
-      <width>81</width>
-      <height>27</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label">
-    <property name="geometry">
-     <rect>
-      <x>160</x>
-      <y>80</y>
-      <width>81</width>
-      <height>17</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Centroids:</string>
-    </property>
-   </widget>
-  </widget>
-  <widget class="QGroupBox" name="groupBox_2">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>130</y>
-     <width>571</width>
-     <height>121</height>
-    </rect>
-   </property>
-   <property name="title">
-    <string>Training:</string>
-   </property>
-   <widget class="QLabel" name="label_2">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>30</y>
-      <width>81</width>
-      <height>17</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Iterations:</string>
-    </property>
-   </widget>
-   <widget class="QSpinBox" name="spinBox_2">
-    <property name="geometry">
-     <rect>
-      <x>100</x>
-      <y>30</y>
-      <width>81</width>
-      <height>27</height>
-     </rect>
-    </property>
-   </widget>
-  </widget>
+  <layout class="QGridLayout" name="gridLayout_2">
+   <item row="0" column="0">
+    <widget class="QGroupBox" name="groupBox_3">
+     <property name="title">
+      <string>Preparation:</string>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QPushButton" name="loadDataButton">
+        <property name="text">
+         <string>Load Training Data</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>304</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="showOneClassButton">
+        <property name="text">
+         <string>show a class</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="testButton">
+        <property name="text">
+         <string>Test</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>Initialization:</string>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="QPushButton" name="kmeansClusteringButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string>Kmeans Clustering</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Centroids:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QSpinBox" name="kmeansCentroidsBox">
+        <property name="maximum">
+         <number>9999999</number>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Iterations:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QSpinBox" name="kmeansIterationsBox">
+        <property name="value">
+         <number>3</number>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QGroupBox" name="groupBox_2">
+     <property name="title">
+      <string>Training:</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="0" column="3">
+       <widget class="QPushButton" name="svmTrainingButton">
+        <property name="text">
+         <string>SVM Training</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1" colspan="2">
+       <widget class="QSpinBox" name="trainingIterationsBox"/>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>Iterations:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0" colspan="2">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>Visual Word:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QSpinBox" name="visualWordBox">
+        <property name="value">
+         <number>1</number>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QTextBrowser" name="textBrowser">
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
  </widget>
  <resources/>
  <connections>
