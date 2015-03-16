@@ -3,6 +3,7 @@
 #include "imtools.h"
 #include <QElapsedTimer>
 #include <QMessageBox>
+#include "ui_mainwindow.h"
 
 DepthMapGenerationWithKmeansDialog::DepthMapGenerationWithKmeansDialog(QWidget *parent) :
     QDialog(parent),

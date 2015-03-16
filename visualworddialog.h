@@ -2,12 +2,13 @@
 #define VISUALWORDDIALOG_H
 
 #include <QDialog>
-#include "ui_mainwindow.h"
 #include <QSqlDatabase>
 #include "visualword.h"
 
+
 namespace Ui {
 class VisualWordDialog;
+class MainWindow;
 }
 
 class VisualWordDialog : public QDialog

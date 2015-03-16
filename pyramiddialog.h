@@ -2,12 +2,12 @@
 #define PYRAMIDDIALOG_H
 
 #include <QDialog>
-#include "ui_mainwindow.h"
 #include "informationpanel.h"
 #include "pyramid.h"
 
 namespace Ui {
 class PyramidDialog;
+class MainWindow;
 }
 
 class PyramidDialog : public QDialog

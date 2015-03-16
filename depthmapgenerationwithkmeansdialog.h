@@ -4,11 +4,11 @@
 #include <QDialog>
 #include "kmeanssearcher.h"
 #include "displaywidget.h"
-#include "ui_mainwindow.h"
 #include "informationpanel.h"
 
 namespace Ui {
 class DepthMapGenerationWithKmeansDialog;
+class MainWindow;
 }
 
 class DepthMapGenerationWithKmeansDialog : public QDialog

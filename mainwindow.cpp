@@ -67,9 +67,12 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_action_Open_triggered()
 {
-    QString filename = QFileDialog::getOpenFileName( this, tr( "Open Image"), lastPath, tr("Image Files (*.png *.jpg *.jpeg *.bmp)"));
+    QString filename = QFileDialog::getOpenFileName( this, tr( "Open Image"), lastPath,
+                                            tr("Image Files (*.png *.jpg *.jpeg *.bmp *.yaml)"));
 
     lastPath = QFileInfo( filename ).absolutePath();
+
+    //QString filename = QFileDialog::getOpenFileName( this, tr( "Open Image"), ".", tr("Image Files (*.png *.jpg *.jpeg *.bmp)"));
 
     Mat image;
 
@@ -79,9 +82,16 @@ void MainWindow::on_action_Open_triggered()
     }
     else
     {
-        image = imread( filename.toLocal8Bit().data() );
+        if( QFileInfo(filename).suffix() == "yaml" ){
+            FileStorage fs;
+            if( fs.open( filename.toLocal8Bit().data(), FileStorage::READ ) ){
+                fs[ "depth" ] >> image;
+            }
+            fs.release();
+        }else{
+            image = imread( filename.toLocal8Bit().data() );
+        }
     }
-
 
     if( !image.empty() )
     {

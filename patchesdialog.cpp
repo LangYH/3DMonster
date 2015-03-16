@@ -1,6 +1,7 @@
 ﻿#include "patchesdialog.h"
 #include "ui_patchesdialog.h"
 #include <QMessageBox>
+#include "ui_mainwindow.h"
 
 PatchesDialog::PatchesDialog(QWidget *parent) :
     QDialog(parent),

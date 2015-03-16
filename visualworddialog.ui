@@ -41,13 +41,6 @@
        </spacer>
       </item>
       <item>
-       <widget class="QPushButton" name="showOneClassButton">
-        <property name="text">
-         <string>show a class</string>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QPushButton" name="testButton">
         <property name="text">
          <string>Test</string>
@@ -66,7 +59,7 @@
       <item>
        <widget class="QPushButton" name="kmeansClusteringButton">
         <property name="enabled">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
         <property name="text">
          <string>Kmeans Clustering</string>
@@ -110,15 +103,12 @@
       <string>Training:</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="0" column="3">
-       <widget class="QPushButton" name="svmTrainingButton">
+      <item row="1" column="0" colspan="2">
+       <widget class="QLabel" name="label_4">
         <property name="text">
-         <string>SVM Training</string>
+         <string>Visual Word:</string>
         </property>
        </widget>
-      </item>
-      <item row="0" column="1" colspan="2">
-       <widget class="QSpinBox" name="trainingIterationsBox"/>
       </item>
       <item row="0" column="0">
        <widget class="QLabel" name="label_2">
@@ -127,17 +117,30 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="0" colspan="2">
-       <widget class="QLabel" name="label_4">
+      <item row="0" column="3">
+       <widget class="QPushButton" name="svmTrainingButton">
         <property name="text">
-         <string>Visual Word:</string>
+         <string>SVM Training</string>
         </property>
        </widget>
       </item>
       <item row="1" column="2">
        <widget class="QSpinBox" name="visualWordBox">
+        <property name="maximum">
+         <number>999999</number>
+        </property>
         <property name="value">
          <number>1</number>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1" colspan="2">
+       <widget class="QSpinBox" name="trainingIterationsBox"/>
+      </item>
+      <item row="1" column="3">
+       <widget class="QPushButton" name="showOneClassButton">
+        <property name="text">
+         <string>show a class</string>
         </property>
        </widget>
       </item>

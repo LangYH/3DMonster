@@ -1,6 +1,7 @@
 ﻿#include "pyramiddialog.h"
 #include "ui_pyramiddialog.h"
 #include <QMessageBox>
+#include "ui_mainwindow.h"
 
 PyramidDialog::PyramidDialog(QWidget *parent) :
     QDialog(parent),

@@ -6,6 +6,9 @@
 using namespace cv;
 
 enum CROSS_VALIDATION_SYMBOL { STAGE_ONE, STAGE_TWO };
+//notice:
+//At STAGE_ONE: D1, N1 as training data, D2 as discovery data
+//At STAGE_TWO: D2, N2 as trianing data, D1 as discovery data
 
 class VisualWord
 {
@@ -21,6 +24,11 @@ private:
 
     //training data
     QStringList D1, D2, N1, N2;
+
+    std::vector<int> D1_label;
+    std::vector<float> D1_score;
+    std::vector<int> D2_label;
+    std::vector<float> D2_score;
 
     //kmeans initialization result
     Mat centers;
@@ -38,10 +46,21 @@ public:
     void train();
     void loadDataFromDatabase();
     void kmeansInitialize();
-    void visualWordsTrainingWithCrossValidation();
+
+    //train one visual word
     bool trainOneVisualWord(CvSVM &svm, const int init_class_label , const int iteration);
-    void svmTrain( CvSVM &svm, const int class_label ,CROSS_VALIDATION_SYMBOL cv_symbol );
-    void svmDetect( CvSVM &svm, const int class_label, CROSS_VALIDATION_SYMBOL cv_symbol );
+
+    void svmTrain( CvSVM &svm, const int class_label , CROSS_VALIDATION_SYMBOL cv_symbol );
+    int svmDetect( CvSVM &svm, const int class_label, CROSS_VALIDATION_SYMBOL cv_symbol );
+
+    void initDatabaseClassLabel();
+    void updateDatabase();
+    void cleanClassLabel( CROSS_VALIDATION_SYMBOL cv_symbol );
+    void getPositiveSampleList( QStringList &positive_list, const int class_label,
+                                CROSS_VALIDATION_SYMBOL cv_symbol );
+    void keepTopResults( const int m, const int class_label, CROSS_VALIDATION_SYMBOL cv_symbol );
+
+    //**************************************************************************************
 
     //parameters setting
     void setCentroids( int k );
@@ -54,10 +73,6 @@ public:
     void computeDesriptorMat(const QStringList &D1, Mat &descriptorMatOfD1);
 
     //other operation
-    void initDatabaseClassLabel();
-    void cleanDatabaseClassLabel(CROSS_VALIDATION_SYMBOL cv_symbol );
-    bool keepTopResults( const int m,
-                        const int class_label, CROSS_VALIDATION_SYMBOL cv_symbol );
     void writeKmeansResultToDatabase( const Mat &bestlabels );
 
 };
