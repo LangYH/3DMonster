@@ -5,6 +5,7 @@
 #include <sys/time.h>
 #include "imtools.h"
 #include <QFile>
+#include "patch.h"
 
 #define NUMBER_OF_DISCOVERY_SET1 46848
 #define NUMBER_OF_DISCOVERY_SET2 46849
@@ -171,11 +172,13 @@ bool VisualWord::trainOneVisualWord( CvSVM &svm, const int init_class_label, con
         }
 
         keepTopResults( NUMBER_OF_POSITIVE_SAMPLE_TO_KEEP, init_class_label, STAGE_TWO );
-        updateDatabase();
 
         iter++;
 
     }
+
+    updateDatabase();
+    storeClusters( init_class_label );
 
     return true;
 
@@ -325,6 +328,91 @@ void VisualWord::updateDatabase()
         }
     }
     CV_Assert( QSqlDatabase::database().commit() );
+}
+
+void VisualWord::storeClusters(const int target_class_label)
+{
+    //save file path operation
+    QDir path_of_all_cluster( "/home/lang/dataset/NYUDataset/visual_word_clusters" );
+    CV_Assert( path_of_all_cluster.mkdir( "cluster_" + QString::number(target_class_label)) );
+
+    QString path_of_current_cluster = path_of_all_cluster.path() + QDir::separator() +
+            "cluster_" + QString::number( target_class_label );
+
+    CV_Assert( QDir( path_of_current_cluster ).mkdir("image_patches")) ;
+
+    QString path_of_saving_image = path_of_current_cluster + QDir::separator() + "image_patches";
+    //********************************************************************************
+
+    QString command = "SELECT patch_path, patch_name, test_score, source_image_path, source_image_name, coordinate_x, coordinate_y, layer "
+            " FROM nyu_depth_patches "
+            " WHERE test_label = :label "
+            " ORDER BY test_score DESC ;";
+
+    QSqlQuery query;
+    query.prepare( command );
+    query.bindValue(":label", target_class_label);
+    CV_Assert( query.exec( ));
+
+    if( query.size() == 0 )
+        return;
+
+    QString path, name, full_path;
+    double svm_score = 0.0;
+    double svm_score_sum = 0.0;
+    QString source_image_path, source_image_name, source_image_full_path;
+    int coordinate_x, coordinate_y, layer;
+    std::vector<Mat> mat_list;
+    int counts = 1;
+    while( query.next() ){
+        //read depth patches
+        path = query.value(0).toString();
+        name = query.value(1).toString();
+        svm_score = query.value(2).toDouble();
+        full_path= path + QDir::separator() + name;
+        Mat depth_patch = imread( full_path.toLocal8Bit().data(), CV_LOAD_IMAGE_GRAYSCALE );
+        depth_patch.convertTo( depth_patch, CV_32FC1 );
+        depth_patch *= svm_score;
+        mat_list.push_back( depth_patch );
+        svm_score_sum += svm_score;
+
+        //read image pathces
+        source_image_path = query.value(3).toString();
+        source_image_name = query.value(4).toString();
+        coordinate_x = query.value(5).toInt();
+        coordinate_y = query.value(6).toInt();
+        layer = query.value(7).toInt();
+        source_image_full_path = source_image_path + QDir::separator() + source_image_name;
+        Mat source_image = imread( source_image_full_path.toLocal8Bit().data() );
+        Mat image_patch;
+        Patch::getPatchForGivenCoordinates( source_image, image_patch, 3, 2, 1.6,
+                                            Point( coordinate_x, coordinate_y ), layer );
+        QString save_path = path_of_saving_image + QDir::separator() + QString::number(counts) +
+                ".png";
+        imwrite( save_path.toLocal8Bit().data(), image_patch );
+
+        counts++;
+    }
+
+    Mat average( mat_list[0].rows, mat_list[0].cols, CV_32FC1, Scalar(0) );
+    for( unsigned i = 0; i < mat_list.size(); i++ ){
+        average += mat_list.at(i);
+    }
+    average /= svm_score_sum;
+    QString save_depth_path = path_of_current_cluster + QDir::separator() + "average_depth.png";
+    cv::normalize( average, average, 0, 255, NORM_MINMAX, CV_8UC1 );
+    imwrite( save_depth_path.toLocal8Bit().data(), average );
+
+    QString insert_command = "INSERT INTO visual_word ( class_id, class_path, image_path, svm_score, depth_average_patch ) "
+            " VALUES (:class_id, :class_path, :image_path, :svm_score, :average_patch ) ; ";
+    query.prepare( insert_command );
+    query.bindValue( ":class_id", target_class_label );
+    query.bindValue( ":class_path", path_of_current_cluster );
+    query.bindValue( ":image_path", "image_patches");
+    query.bindValue( ":svm_score", svm_score_sum );
+    query.bindValue( ":average_patch", "average_depth.png" );
+    CV_Assert( query.exec() );
+
 }
 
 void VisualWord::cleanClassLabel(CROSS_VALIDATION_SYMBOL cv_symbol)

@@ -55,6 +55,7 @@ public:
 
     void initDatabaseClassLabel();
     void updateDatabase();
+    void storeClusters( const int target_class_label );
     void cleanClassLabel( CROSS_VALIDATION_SYMBOL cv_symbol );
     void getPositiveSampleList( QStringList &positive_list, const int class_label,
                                 CROSS_VALIDATION_SYMBOL cv_symbol );

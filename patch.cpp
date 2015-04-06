@@ -18,6 +18,19 @@ Patch::~Patch()
     delete parameters;
 }
 
+void Patch::getPatchForGivenCoordinates(const Mat &image, Mat &patches,
+                                     int octaves, int octave_layers, double sigma,
+                                     const Point coor, const int layer)
+{
+    Pyramid imPyramid( octaves, octave_layers, sigma );
+
+    std::vector<Mat> pyrs;
+    imPyramid.buildGaussianPyramid( image, pyrs );
+
+    patches = pyrs[layer]( Rect( coor.x, coor.y, 80, 80)).clone();
+
+}
+
 void Patch::randomSamplePatchesInPyramid(const Mat image, std::vector<Mat> &pyrs,
                                          std::vector< std::vector<Mat> > &patches_array,
                                          std::vector< std::vector<Point> > &coordinates_array,

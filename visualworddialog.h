@@ -30,6 +30,8 @@ private slots:
 
     void on_showOneClassButton_clicked();
 
+    void on_trainAllButton_clicked();
+
 private:
     Ui::VisualWordDialog *ui;
     Ui::MainWindow *ui_mainWindow;
