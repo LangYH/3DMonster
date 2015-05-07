@@ -9,11 +9,12 @@ imtools::imtools()
 
 void imtools::matrixNormalize( Mat const &srcMat, Mat &dstMat )
 {
-    Mat temp;
-    srcMat.convertTo( temp, CV_32FC1 );
-    double minVal, maxVal;
-    minMaxLoc( temp, &minVal, &maxVal );
-    dstMat = (temp-minVal) / ( maxVal - minVal );
+    //Mat temp;
+    //srcMat.convertTo( temp, CV_32FC1 );
+    //double minVal, maxVal;
+    //minMaxLoc( temp, &minVal, &maxVal );
+    //dstMat = (temp-minVal) / ( maxVal - minVal );
+    normalize( srcMat, dstMat, 0, 1.0, NORM_MINMAX, CV_32FC1 );
 }
 
 void imtools::weightsNormalize(Mat &matrix)

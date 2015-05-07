@@ -17,6 +17,7 @@
 #define FILE_NAME_DESCRIPTOR_NATURAL_SET1 "/home/lang/QtProject/build-3DMonster-Desktop_Qt_5_3_GCC_64bit-Debug/HOGData/descriptorMatOfN1.yaml"
 #define FILE_NAME_DESCRIPTOR_NATURAL_SET2 "/home/lang/QtProject/build-3DMonster-Desktop_Qt_5_3_GCC_64bit-Debug/HOGData/descriptorMatOfN2.yaml"
 #define PATH_SVM_CLASSIFIERS "/home/lang/QtProject/build-3DMonster-Desktop_Qt_5_3_GCC_64bit-Debug/svmData"
+#define SVM_CLASSIFIER_PATH "/home/lang/QtProject/build-3DMonster-Desktop_Qt_5_3_GCC_64bit-Debug/svmData/visual_word_classifiers"
 
 VisualWord::VisualWord()
 {
@@ -142,6 +143,13 @@ bool VisualWord::trainOneVisualWord( CvSVM &svm, const int init_class_label, con
 
     initDatabaseClassLabel();
     while( iter < iteration ){
+        if( iter > 1 ){
+            CvMat *weights = cvCreateMat( 2, 1, CV_32FC1 );
+            cvmSet( weights, 0, 0, 1.0 );
+            cvmSet( weights, 1, 0, 0.05 );
+            svm_params.C = 1.0;
+            svm_params.class_weights = weights;
+        }
         std::vector<int> D1_last_label = D1_label;
         std::vector<int> D2_last_label = D2_label;
         int fires = 0;
@@ -330,90 +338,6 @@ void VisualWord::updateDatabase()
     CV_Assert( QSqlDatabase::database().commit() );
 }
 
-void VisualWord::storeClusters(const int target_class_label)
-{
-    //save file path operation
-    QDir path_of_all_cluster( "/home/lang/dataset/NYUDataset/visual_word_clusters" );
-    CV_Assert( path_of_all_cluster.mkdir( "cluster_" + QString::number(target_class_label)) );
-
-    QString path_of_current_cluster = path_of_all_cluster.path() + QDir::separator() +
-            "cluster_" + QString::number( target_class_label );
-
-    CV_Assert( QDir( path_of_current_cluster ).mkdir("image_patches")) ;
-
-    QString path_of_saving_image = path_of_current_cluster + QDir::separator() + "image_patches";
-    //********************************************************************************
-
-    QString command = "SELECT patch_path, patch_name, test_score, source_image_path, source_image_name, coordinate_x, coordinate_y, layer "
-            " FROM nyu_depth_patches "
-            " WHERE test_label = :label "
-            " ORDER BY test_score DESC ;";
-
-    QSqlQuery query;
-    query.prepare( command );
-    query.bindValue(":label", target_class_label);
-    CV_Assert( query.exec( ));
-
-    if( query.size() == 0 )
-        return;
-
-    QString path, name, full_path;
-    double svm_score = 0.0;
-    double svm_score_sum = 0.0;
-    QString source_image_path, source_image_name, source_image_full_path;
-    int coordinate_x, coordinate_y, layer;
-    std::vector<Mat> mat_list;
-    int counts = 1;
-    while( query.next() ){
-        //read depth patches
-        path = query.value(0).toString();
-        name = query.value(1).toString();
-        svm_score = query.value(2).toDouble();
-        full_path= path + QDir::separator() + name;
-        Mat depth_patch = imread( full_path.toLocal8Bit().data(), CV_LOAD_IMAGE_GRAYSCALE );
-        depth_patch.convertTo( depth_patch, CV_32FC1 );
-        depth_patch *= svm_score;
-        mat_list.push_back( depth_patch );
-        svm_score_sum += svm_score;
-
-        //read image pathces
-        source_image_path = query.value(3).toString();
-        source_image_name = query.value(4).toString();
-        coordinate_x = query.value(5).toInt();
-        coordinate_y = query.value(6).toInt();
-        layer = query.value(7).toInt();
-        source_image_full_path = source_image_path + QDir::separator() + source_image_name;
-        Mat source_image = imread( source_image_full_path.toLocal8Bit().data() );
-        Mat image_patch;
-        Patch::getPatchForGivenCoordinates( source_image, image_patch, 3, 2, 1.6,
-                                            Point( coordinate_x, coordinate_y ), layer );
-        QString save_path = path_of_saving_image + QDir::separator() + QString::number(counts) +
-                ".png";
-        imwrite( save_path.toLocal8Bit().data(), image_patch );
-
-        counts++;
-    }
-
-    Mat average( mat_list[0].rows, mat_list[0].cols, CV_32FC1, Scalar(0) );
-    for( unsigned i = 0; i < mat_list.size(); i++ ){
-        average += mat_list.at(i);
-    }
-    average /= svm_score_sum;
-    QString save_depth_path = path_of_current_cluster + QDir::separator() + "average_depth.png";
-    cv::normalize( average, average, 0, 255, NORM_MINMAX, CV_8UC1 );
-    imwrite( save_depth_path.toLocal8Bit().data(), average );
-
-    QString insert_command = "INSERT INTO visual_word ( class_id, class_path, image_path, svm_score, depth_average_patch ) "
-            " VALUES (:class_id, :class_path, :image_path, :svm_score, :average_patch ) ; ";
-    query.prepare( insert_command );
-    query.bindValue( ":class_id", target_class_label );
-    query.bindValue( ":class_path", path_of_current_cluster );
-    query.bindValue( ":image_path", "image_patches");
-    query.bindValue( ":svm_score", svm_score_sum );
-    query.bindValue( ":average_patch", "average_depth.png" );
-    CV_Assert( query.exec() );
-
-}
 
 void VisualWord::cleanClassLabel(CROSS_VALIDATION_SYMBOL cv_symbol)
 {
@@ -581,10 +505,124 @@ void VisualWord::getDataForTrainingFromDatabase( QStringList &D1, QStringList &D
 
 }
 
+void VisualWord::storeClusters(const int target_class_label)
+{
+    //save file path operation
+    QDir path_of_all_cluster( "/home/lang/dataset/NYUDataset/VW_clusters" );
+    CV_Assert( path_of_all_cluster.mkdir( "cluster_" + QString::number(target_class_label)) );
+
+    QString path_of_current_cluster = path_of_all_cluster.path() + QDir::separator() +
+            "cluster_" + QString::number( target_class_label );
+
+    CV_Assert( QDir( path_of_current_cluster ).mkdir("image_patches")) ;
+
+    QString path_of_saving_image = path_of_current_cluster + QDir::separator() + "image_patches";
+    //********************************************************************************
+
+    QString command = "SELECT patch_path, patch_name, test_score, source_image_path, source_image_name, coordinate_x, coordinate_y, layer "
+            " FROM nyu_depth_patches "
+            " WHERE test_label = :label "
+            " ORDER BY test_score DESC ;";
+
+    QSqlQuery query;
+    query.prepare( command );
+    query.bindValue(":label", target_class_label);
+    CV_Assert( query.exec( ));
+
+    if( query.size() == 0 )
+        return;
+
+    QString path, name, full_path;
+    double svm_score = 0.0;
+    double svm_score_sum = 0.0;
+    QString source_image_path, source_image_name, source_image_full_path;
+    int coordinate_x, coordinate_y, layer;
+    std::vector<Mat> mat_list;
+    int counts = 1;
+    while( query.next() ){
+        //read depth patches
+        path = query.value(0).toString();
+        name = query.value(1).toString();
+        svm_score = query.value(2).toDouble();
+        full_path= path + QDir::separator() + name;
+        Mat depth_patch = imread( full_path.toLocal8Bit().data(), CV_LOAD_IMAGE_GRAYSCALE );
+        depth_patch.convertTo( depth_patch, CV_32FC1 );
+        depth_patch *= svm_score;
+        mat_list.push_back( depth_patch );
+        svm_score_sum += svm_score;
+
+        //read image pathces
+        source_image_path = query.value(3).toString();
+        source_image_name = query.value(4).toString();
+        coordinate_x = query.value(5).toInt();
+        coordinate_y = query.value(6).toInt();
+        layer = query.value(7).toInt();
+        source_image_full_path = source_image_path + QDir::separator() + source_image_name;
+        Mat source_image = imread( source_image_full_path.toLocal8Bit().data() );
+        Mat image_patch;
+        Patch::getPatchForGivenCoordinates( source_image, image_patch, 3, 2, 1.6,
+                                            Point( coordinate_x, coordinate_y ), layer );
+        QString save_path = path_of_saving_image + QDir::separator() + QString::number(counts) +
+                ".png";
+        imwrite( save_path.toLocal8Bit().data(), image_patch );
+
+        counts++;
+    }
+
+    Mat average( mat_list[0].rows, mat_list[0].cols, CV_32FC1, Scalar(0) );
+    for( unsigned i = 0; i < mat_list.size(); i++ ){
+        average += mat_list.at(i);
+    }
+    average /= svm_score_sum;
+    QString save_depth_path = path_of_current_cluster + QDir::separator() + "average_depth.png";
+    cv::normalize( average, average, 0, 255, NORM_MINMAX, CV_8UC1 );
+    imwrite( save_depth_path.toLocal8Bit().data(), average );
+
+    QString insert_command = "INSERT INTO visual_word_2 ( class_id, class_path, image_path, svm_score, depth_average_patch ) "
+            " VALUES (:class_id, :class_path, :image_path, :svm_score, :average_patch ) ; ";
+    query.prepare( insert_command );
+    query.bindValue( ":class_id", target_class_label );
+    query.bindValue( ":class_path", path_of_current_cluster );
+    query.bindValue( ":image_path", "image_patches");
+    query.bindValue( ":svm_score", svm_score_sum );
+    query.bindValue( ":average_patch", "average_depth.png" );
+    CV_Assert( query.exec() );
+
+}
+
 void VisualWord::computeDesriptorMat(const QStringList &D1,
                                      Mat &descriptorMatOfD1 )
 {
 
     imtools::computeHOGDescriptorsMat( descriptorMatOfD1, D1, hog_descr );
 
+}
+
+void VisualWord::loadAllSVMClassifiers( std::map<int, CvSVM*> &classifiers )
+{
+    classifiers.clear();
+
+    QDir svm_dir( SVM_CLASSIFIER_PATH );
+    QStringList filters;
+    filters += "*.txt";
+    foreach (QString classifier_name, svm_dir.entryList(filters, QDir::Files )) {
+        //get class id
+        QString file_name = QFileInfo( classifier_name ).baseName();
+        int class_id = file_name.split("_" )[2].toInt();
+        QString full_path = svm_dir.path() + QDir::separator() + classifier_name;
+
+        //load classifer
+        if( classifiers.count(class_id) == 0 ){
+            classifiers[class_id] = new CvSVM;
+            classifiers[class_id]->load( full_path.toLocal8Bit().data() );
+        }
+    }
+}
+
+void VisualWord::cleanAllSVMClassifiers( std::map<int, CvSVM*> &classifiers )
+{
+    std::map<int, CvSVM*>::const_iterator iter;
+    for( iter = classifiers.begin(); iter != classifiers.end(); iter++ ){
+        delete iter->second;
+    }
 }

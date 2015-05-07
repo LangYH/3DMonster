@@ -76,6 +76,9 @@ public:
     //other operation
     void writeKmeansResultToDatabase( const Mat &bestlabels );
 
+    //static function
+    static void loadAllSVMClassifiers( std::map<int, CvSVM*> &classifiers );
+    static void cleanAllSVMClassifiers( std::map<int, CvSVM*> &classifiers );
 };
 
 #endif // VISUALWORD_H

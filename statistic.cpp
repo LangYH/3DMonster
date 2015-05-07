@@ -1,6 +1,7 @@
 ﻿#include "statistic.h"
 #include "opencv2/imgproc/imgproc.hpp"
 #include <iostream>
+#include <opencv2/objdetect/objdetect.hpp>
 
 Statistic::Statistic()
 {
@@ -234,4 +235,37 @@ double Statistic::computeCosineDistance( const Mat &patch1, const Mat &patch2 )
 
     return cos_angle;
 
+}
+
+double Statistic::computeDeviationOfMatrixes(const std::vector<Mat> &patches)
+{
+    if( patches.size() == 0 )
+        return -1.0;
+
+    std::vector<Mat> descrs;
+    for( unsigned i = 0; i < patches.size(); i++ ){
+        Mat temp;
+        equalizeHist( patches[i], temp );
+        descrs.push_back( patches[i] );
+    }
+
+    //compute mean vector
+    Mat mean_vector = descrs[0].clone();
+    for( unsigned i = 1; i < descrs.size(); i++ ){
+        mean_vector += descrs[i];
+    }
+    mean_vector /= double( descrs.size() );
+
+    //compute deviation
+    double sigma_2 = 0.0;
+    for( unsigned i = 0; i < descrs.size(); i++ ){
+        Mat t1, t2;
+        subtract( descrs[i], mean_vector, t1 );
+        multiply( t1, t1, t2 );
+        sigma_2 += cv::sum( t2 )[0];
+    }
+
+    double dev = std::sqrt( sigma_2 / descrs.size() );
+
+    return dev;
 }

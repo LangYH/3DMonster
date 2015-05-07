@@ -137,9 +137,11 @@ int kmeansSearcher::classify(const Mat &inputImage)
 
 int kmeansSearcher::vq( Mat const &featureVector )
 {
+    //compute the distance of the current featurevector and each centroid vector
     Mat centroids = centers.clone();
     int nr = centroids.rows;
     int nc = centroids.cols;
+
     //for each row of descriptorMat, substract by targetDescr and square
     //( a - b )^2
     Mat feature;
@@ -156,7 +158,7 @@ int kmeansSearcher::vq( Mat const &featureVector )
         }
     }
 
-    //squareroot of summation of each row: ( a11 + a12 + a13 ..)^1/2
+    //squareroot of sum of each row:  sumAndSqrtVector[1] = sqrt( a11 + a12 + a13 ..)
     Mat sumAndSqrtVector( nr, 1, CV_32FC1 );
     for( int i = 0; i < nr; i++ ){
         std::cout << sum( diffMat.row(i) )[0]  << std::endl;

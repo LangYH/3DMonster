@@ -32,6 +32,18 @@ private slots:
 
     void on_trainAllButton_clicked();
 
+    void on_findSimilarButton_clicked();
+
+    void on_computeDeviationButton_clicked();
+
+    void on_trainMultipleSVMClassifierButton_clicked();
+
+    void on_prepareDataButton_clicked();
+
+    void on_testClassifierButton_clicked();
+
+    void on_convertAImageButton_clicked();
+
 private:
     Ui::VisualWordDialog *ui;
     Ui::MainWindow *ui_mainWindow;

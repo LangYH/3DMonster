@@ -27,7 +27,7 @@
    <item row="0" column="1">
     <widget class="QSpinBox" name="wsizeBox">
      <property name="value">
-      <number>70</number>
+      <number>15</number>
      </property>
     </widget>
    </item>

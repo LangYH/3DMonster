@@ -25,7 +25,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     informationOutput = new InformationPanel(this);
 
-    lastPath = "/home/lang/Pictures/";
+    lastPath = "/home/lang/dataset/NYUDataset/images";
     DIBRHelper = new ConvertDialogHelper();
     depthMapGenerationWithKmeansDlg = NULL;
     depthMapGenerationWithKNNDlg = NULL;
@@ -50,6 +50,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->ImView->setContextMenuPolicy( Qt::ActionsContextMenu );
     //*****************************************************************
 
+
+    //connect database: imageset
+    db = DatabaseManager::createConnection( "QPSQL","localhost","imageset","lang","lang");
+    if( !db.isOpen() )
+        exit(1);
+
     QFont statusBarFont("Times", 15, QFont::Bold );
     statusBar()->setFont( statusBarFont );
     statusBar()->showMessage("Open image to start processing" );
@@ -60,6 +66,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    if( db.isOpen() ){
+        db.close();
+    }
     delete informationOutput;
     delete DIBRHelper;
     delete ui;
