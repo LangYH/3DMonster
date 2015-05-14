@@ -18,6 +18,7 @@
 #define FILE_NAME_DESCRIPTOR_NATURAL_SET2 "/home/lang/QtProject/build-3DMonster-Desktop_Qt_5_3_GCC_64bit-Debug/HOGData/descriptorMatOfN2.yaml"
 #define PATH_SVM_CLASSIFIERS "/home/lang/QtProject/build-3DMonster-Desktop_Qt_5_3_GCC_64bit-Debug/svmData"
 #define SVM_CLASSIFIER_PATH "/home/lang/QtProject/build-3DMonster-Desktop_Qt_5_3_GCC_64bit-Debug/svmData/visual_word_classifiers"
+#define SVM_CLASSIFIER_PATH_2 "/home/lang/QtProject/build-3DMonster-Desktop_Qt_5_3_GCC_64bit-Debug/svmData/visual_word_classifiers_2"
 
 VisualWord::VisualWord()
 {
@@ -602,7 +603,7 @@ void VisualWord::loadAllSVMClassifiers( std::map<int, CvSVM*> &classifiers )
 {
     classifiers.clear();
 
-    QDir svm_dir( SVM_CLASSIFIER_PATH );
+    QDir svm_dir( SVM_CLASSIFIER_PATH_2 );
     QStringList filters;
     filters += "*.txt";
     foreach (QString classifier_name, svm_dir.entryList(filters, QDir::Files )) {

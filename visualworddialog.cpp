@@ -11,6 +11,7 @@
 #include "statistic.h"
 #include "imtools.h"
 #include "filters.h"
+#include "pyramid.h"
 
 #define FILE_NAME_DESCRIPTOR_NYU_SET1 "HOGData/descriptorMatOfD1.yaml"
 #define FILE_NAME_DESCRIPTOR_NATURAL_SET1 "/home/lang/QtProject/build-3DMonster-Desktop_Qt_5_3_GCC_64bit-Debug/HOGData/descriptorMatOfN1.yaml"
@@ -230,7 +231,7 @@ void VisualWordDialog::on_findSimilarButton_clicked()
 {
     QSqlQuery query;
     QString command = "SELECT class_id, class_path, depth_average_patch, svm_score "
-                      " FROM visual_word "
+                      " FROM visual_word_2 "
                       " WHERE available = 1 ; ";
     CV_Assert( query.exec( command ) );
 
@@ -244,11 +245,11 @@ void VisualWordDialog::on_findSimilarButton_clicked()
         class_id = query.value(0).toInt();
         path = query.value(1).toString();
         name = query.value(2).toString();
-        svm_scores[class_id] = query.value(3).toDouble();
-
         full_path = path + QDir::separator() + name;
         Mat depth = imread( full_path.toLocal8Bit().data(), CV_LOAD_IMAGE_GRAYSCALE );
+
         depths[class_id] = depth;
+        svm_scores[class_id] = query.value(3).toDouble();
         tags[class_id] = 1;
     }
 
@@ -293,7 +294,7 @@ void VisualWordDialog::on_findSimilarButton_clicked()
     for( std::map<int,int>::const_iterator iter = tags.begin(); iter != tags.end();
          iter++ ){
         if( iter->second == 0 ){
-            QString update_command = "UPDATE visual_word "
+            QString update_command = "UPDATE visual_word_2 "
                                      " SET available = 0 "
                                      " WHERE class_id = :class_id ; ";
             query.prepare( update_command );
@@ -418,7 +419,7 @@ void VisualWordDialog::on_trainMultipleSVMClassifierButton_clicked()
     //train a SVM classifier for every visual word whose svm_score in depth space
     //is bigger than 7.5
     QString command = "SELECT class_id, class_path, image_path "
-            " FROM visual_word"
+            " FROM visual_word_2"
             " WHERE available = 1 AND svm_score > 7.5 "
             " ORDER BY class_id ;";
     QSqlQuery query;
@@ -481,7 +482,7 @@ void VisualWordDialog::on_trainMultipleSVMClassifierButton_clicked()
         vconcat( positive_labels_mat, negative_labels_mat, labels_matrixes );
 
         //svm training...
-        QString classifier_save_path = "svmData/visual_word_classifiers/visual_word_"
+        QString classifier_save_path = "svmData/visual_word_classifiers_2/visual_word_"
                         + QString::number( iter->first ) + ".txt";
         CvSVM svm;
         svm.train( samples_matrixes, labels_matrixes, Mat(), Mat(), svm_params );
@@ -583,19 +584,41 @@ void VisualWordDialog::on_convertAImageButton_clicked()
 
     Mat image = ui_mainWindow->ImView->getCurrentImage();
 
+
     std::vector<Mat> pyrs;
     std::vector< std::vector<Mat> > patches_array;
     std::vector< std::vector<Point> > coordinates_array;
     std::vector< std::vector<PATCH_TYPE> > overlappedPatchSymbols_array;
     std::vector< std::vector<PATCH_TYPE> > flatPatchSymbols_array;
 
+    samplePatchesForDepthGeneration( image, patches_array, coordinates_array );
+
     Patch *patchExtracter;
     patchExtracter = new Patch( 80 );
 
 
-    patchExtracter->randomSamplePatchesInPyramid( image, pyrs, patches_array, coordinates_array,
-                                                  3, 2, 1.6,
-                                                  100, 6 );
+    //drop the first two layers of pyramid
+    Pyramid imPyramid( 3, 2, 1.0 );
+    imPyramid.buildGaussianPyramid( image, pyrs );
+    pyrs.erase( pyrs.begin() );
+    pyrs.erase( pyrs.begin() );
+
+    std::vector<Mat> patches_in_single_image;
+    std::vector<Point> coordinates_in_single_image;
+    std::vector<int> number_vector;
+    number_vector.push_back( 20 );
+    number_vector.push_back( 20 );
+    number_vector.push_back( 10 );
+    number_vector.push_back( 10 );
+    for( unsigned int i = 0; i < pyrs.size(); i++ ){
+        std::vector<Mat>().swap( patches_in_single_image );
+        std::vector<Point>().swap( coordinates_in_single_image );
+        patchExtracter->randomSamplePatches( pyrs[i], patches_in_single_image,
+                             coordinates_in_single_image, number_vector[i] );
+        patches_array.push_back( patches_in_single_image );
+        coordinates_array.push_back( coordinates_in_single_image );
+    }
+
     //intialize overlap symbols and flatPatchSymbols
     overlappedPatchSymbols_array.assign( patches_array.size(), std::vector<PATCH_TYPE>() );
     flatPatchSymbols_array.assign( patches_array.size(), std::vector<PATCH_TYPE>() );
@@ -644,7 +667,7 @@ void VisualWordDialog::on_convertAImageButton_clicked()
                 if( best_match_score > -1.0 ){
                     //get the corresponding depthmap
                     QString command = "SELECT class_path, depth_average_patch "
-                                      " FROM visual_word "
+                                      " FROM visual_word_2 "
                                       " WHERE class_id = :class_id ;";
                     QSqlQuery query;
                     query.prepare(command);
@@ -679,13 +702,17 @@ void VisualWordDialog::on_convertAImageButton_clicked()
         }
     }
 
-    for( unsigned i = 0; i < 2; i++ )
-        ui_mainWindow->ImView->setPaintImage(depths[i] );
-
-    for( unsigned i = 2; i < depths.size(); i++ ){
+    for( unsigned i = 0; i < depths.size(); i++ ){
         Mat elarge_image;
-        cv::resize( depths[i], elarge_image, depths[0].size() );
+        cv::resize( depths[i], elarge_image, image.size() );
         ui_mainWindow->ImView->setPaintImage( elarge_image );
     }
     delete patchExtracter;
+}
+
+void samplePatchesForDepthGeneration( const Mat &image,
+                                      std::vector<Mat> patches,
+                                      std::vector<Point> coordinates )
+{
+
 }

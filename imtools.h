@@ -9,6 +9,7 @@
 
 using namespace cv;
 
+typedef double ElementType;
 
 
 class imtools
@@ -43,6 +44,8 @@ public:
     //compute the gradient energy of the input matrix
     //for a smooth area, it give a small value
     static double computeGradientEnergyWithHOG(const Mat &patch);
+
+    static void idxSort(ElementType Data[], int SortedIndex[], int N);
 };
 
 #endif // IMTOOLS_H

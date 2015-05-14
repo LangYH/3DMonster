@@ -182,5 +182,10 @@ void DepthMapGeneratingAlgorithms::usingkmeansWithHOG( Mat const &inputImage, Ma
 
 }
 
+void DepthMapGeneratingAlgorithms::usingVisualWord(const Mat &inputImage, Mat &finalDepthMap)
+{
+
+}
+
 
 

@@ -3,6 +3,14 @@
 #include <iostream>
 #include "statistic.h"
 
+#define Cutoff ( 3 )
+
+
+typedef struct SortingEntry{
+    int index;
+    ElementType elem;
+} SortingEntry, *SortingEntryPtr;
+
 imtools::imtools()
 {
 }
@@ -108,4 +116,98 @@ double imtools::computeGradientEnergyWithHOG( const Mat &patch )
     //return std::sqrt( gradient_energy );
     return deviation;
 
+}
+
+void Swap( SortingEntryPtr *a, SortingEntryPtr *b )
+{
+    SortingEntryPtr tmp;
+    tmp = *a;
+    *a = *b;
+    *b = tmp;
+}
+
+void insertSort( SortingEntryPtr A[], int N )
+{
+    int j, p;
+
+    SortingEntryPtr tmp;
+    for( p = 1; p < N; p++ ){
+        tmp = A[p];
+        for( j = p; j > 0 && A[j-1]->elem > tmp->elem; j-- )
+            A[j] = A[j-1];
+        A[j] = tmp;
+    }
+}
+
+ElementType median3( SortingEntryPtr A[], int left, int right )
+{
+    int center = ( left + right ) / 2;
+
+    if( A[left]->elem > A[center]->elem ){
+        Swap( &A[left], &A[center] );
+    }
+    if( A[left]->elem > A[right]->elem ){
+        Swap( &A[left], &A[right] );
+    }
+    if( A[center]->elem > A[right]->elem ){
+        Swap( &A[center], &A[right] );
+    }
+
+    Swap( &A[center], &A[right-1] );
+
+    return A[right-1]->elem;
+}
+
+void Qsort( SortingEntryPtr A[], int left, int right )
+{
+    int i, j;
+    ElementType pivot;
+
+    if( left + Cutoff <= right )
+    {
+        pivot = median3( A, left, right );
+        i = left;
+        j = right - 1;
+        for(;;){
+            while( A[++i]->elem < pivot )
+                ;
+            while( A[--j]->elem > pivot )
+                ;
+            if( i < j ){
+                Swap( &A[i], &A[j] );
+            }
+            else
+                break;
+        }
+        Swap( &A[i], &A[right-1] );
+
+        Qsort( A, left, i - 1 );
+        Qsort( A, i + 1, right );
+    }
+    else{
+        //insert sort
+        insertSort( A + left, right - left + 1 );
+
+    }
+}
+
+void imtools::idxSort( ElementType Data[], int SortedIndex[], int N )
+{
+    SortingEntryPtr A[N];
+    for( int i = 0; i < N; i++ ){
+        A[i] = (SortingEntryPtr)malloc( sizeof( SortingEntry ) );
+        if( A[i] == NULL ){
+            printf( "No space for sorting" );
+            exit(1);
+        }
+        A[i]->elem = Data[i];
+        A[i]->index = i;
+    }
+
+    Qsort( A, 0, N - 1 );
+
+    for( int i = 0; i < N; i++ ){
+        SortedIndex[i] = A[i]->index;
+        free( A[i] );
+    }
 }
