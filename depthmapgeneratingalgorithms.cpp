@@ -151,6 +151,7 @@ void DepthMapGeneratingAlgorithms::usingkNNWithHOG( Mat const &inputImage, Mat &
     fusedDepthMap *= s;
     convertScaleAbs( fusedDepthMap, fusedDepthMap );
     fusedDepthMap.copyTo( finalDepthMap );
+    equalizeHist( finalDepthMap, finalDepthMap );
     //------------------------------------------------------------
 
 }

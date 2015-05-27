@@ -118,6 +118,30 @@ double imtools::computeGradientEnergyWithHOG( const Mat &patch )
 
 }
 
+void imtools::idxSort( const std::vector<double> data, std::vector<int> &sorted_index,
+                       bool reverse )
+{
+    int N = data.size();
+
+    std::vector<int>().swap( sorted_index );
+    sorted_index.assign( N, -1 );
+
+    ElementType A[N];
+    for( int i = 0; i < N; i++ ){
+        A[i] = data[i];
+    }
+
+    int sorted_idx[N];
+    idxSort( A, sorted_idx, N );
+
+    for( int i = 0; i < N; i++ ){
+        if( reverse == true )
+            sorted_index[i] = sorted_idx[N-i-1];
+        else
+            sorted_index[i] = sorted_idx[i];
+    }
+}
+
 void Swap( SortingEntryPtr *a, SortingEntryPtr *b )
 {
     SortingEntryPtr tmp;

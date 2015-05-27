@@ -39,7 +39,8 @@ SOURCES += main.cpp\
     imageresizedialog.cpp \
     pyramiddialog.cpp \
     patchesdialog.cpp \
-    visualworddialog.cpp
+    visualworddialog.cpp \
+    visualworddictionary.cpp
 
 HEADERS  += mainwindow.h \
     databasemanager.h \
@@ -66,7 +67,8 @@ HEADERS  += mainwindow.h \
     imageresizedialog.h \
     pyramiddialog.h \
     patchesdialog.h \
-    visualworddialog.h
+    visualworddialog.h \
+    visualworddictionary.h
 
 FORMS    += mainwindow.ui \
     connectdatabasedialog.ui \

@@ -15,6 +15,8 @@ DepthMapGenerationWithKmeansDialog::DepthMapGenerationWithKmeansDialog(QWidget *
 
 DepthMapGenerationWithKmeansDialog::~DepthMapGenerationWithKmeansDialog()
 {
+    if( searcher != NULL )
+        delete searcher;
     //delete informationOutput;
     delete ui;
 }

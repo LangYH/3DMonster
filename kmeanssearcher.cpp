@@ -140,36 +140,22 @@ int kmeansSearcher::vq( Mat const &featureVector )
     //compute the distance of the current featurevector and each centroid vector
     Mat centroids = centers.clone();
     int nr = centroids.rows;
-    int nc = centroids.cols;
 
     //for each row of descriptorMat, substract by targetDescr and square
     //( a - b )^2
     Mat feature;
     featureVector.convertTo( feature, CV_32FC1 );
     centroids.convertTo( centroids, CV_32FC1 );
-    Mat diffMat( nr, nc, CV_32FC1 );
+    Mat diffMat;
+    diffMat.create( nr, 1, CV_32FC1 );
     for( int i = 0; i < nr; i++ ){
-        const double *data_feature = feature.ptr<double>(0);
-        double *data_centroids = centroids.ptr<double>(i);
-        double *data_diffMat = diffMat.ptr<double>(i);
-        for( int j = 0; j < nc; j++ ){
-            double temp = (*data_centroids++)-(*data_feature++);
-            *data_diffMat++ = temp * temp;
-        }
-    }
-
-    //squareroot of sum of each row:  sumAndSqrtVector[1] = sqrt( a11 + a12 + a13 ..)
-    Mat sumAndSqrtVector( nr, 1, CV_32FC1 );
-    for( int i = 0; i < nr; i++ ){
-        std::cout << sum( diffMat.row(i) )[0]  << std::endl;
-        sumAndSqrtVector.at<double>( i, 0 ) = std::sqrt( sum( diffMat.row(i) )[0] );
+        diffMat.at<double>( i, 0 ) = cv::norm( featureVector, centroids.row(i) );
     }
 
     Mat ides;
-    sortIdx( sumAndSqrtVector, ides, CV_SORT_ASCENDING + CV_SORT_EVERY_COLUMN );
+    sortIdx( diffMat, ides, CV_SORT_ASCENDING + CV_SORT_EVERY_COLUMN );
 
     return ides.at<ushort>( 0, 0 );
-
 
 }
 

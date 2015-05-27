@@ -45,6 +45,7 @@ public:
     //for a smooth area, it give a small value
     static double computeGradientEnergyWithHOG(const Mat &patch);
 
+    static void idxSort(const std::vector<double> data, std::vector<int> &sorted_index , bool reverse = false );
     static void idxSort(ElementType Data[], int SortedIndex[], int N);
 };
 

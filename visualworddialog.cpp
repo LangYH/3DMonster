@@ -12,6 +12,7 @@
 #include "imtools.h"
 #include "filters.h"
 #include "pyramid.h"
+#include "visualworddictionary.h"
 
 #define FILE_NAME_DESCRIPTOR_NYU_SET1 "HOGData/descriptorMatOfD1.yaml"
 #define FILE_NAME_DESCRIPTOR_NATURAL_SET1 "/home/lang/QtProject/build-3DMonster-Desktop_Qt_5_3_GCC_64bit-Debug/HOGData/descriptorMatOfN1.yaml"
@@ -340,169 +341,14 @@ void VisualWordDialog::on_computeDeviationButton_clicked()
 }
 
 
-static void prepareNegativeSamplesForMultipleSVMTraining( Mat &negativeDescriptorMat )
-{
-
-    //Mat neg1, neg2;
-    //FileStorage fs;
-    //if( fs.open( FILE_NAME_DESCRIPTOR_NATURAL_SET1, FileStorage::READ ) ){
-    //    fs["N1"] >> neg1;
-    //}
-    //fs.release();
-
-    //negativeDescriptorMat = neg1.rowRange(0,50).clone();
-
-    //if( fs.open( FILE_NAME_DESCRIPTOR_NATURAL_SET2, FileStorage::READ ) ){
-    //    fs["N2"] >> negativeDescriptorMat;
-    //}
-    //fs.release();
-    //vconcat( neg1, neg2, negativeDescriptorMat );
-
-    QString command = "SELECT class_path, image_path "
-            " FROM visual_word"
-            " WHERE available = 1 AND svm_score <= 7.5 "
-            " ORDER BY class_id ;";
-    QSqlQuery query;
-    assert( query.exec(command) );
-
-    HOGDescriptor *hog_descr = new HOGDescriptor( cvSize(80,80), cvSize( 8, 8 ),
-                                   cvSize( 8, 8 ), cvSize( 8, 8 ), 9  );
-
-    while( query.next() ){
-        //get all patches of one class
-        QString path = query.value(0).toString() + QDir::separator() +
-                        query.value(1).toString();
-        QDir target_dir( path );
-        QStringList filters;
-        filters += "*.png";
-        QStringList positiveSamplesList;
-        foreach (QString file, target_dir.entryList(filters,QDir::Files)) {
-            QString full_path = path + QDir::separator() + file;
-            positiveSamplesList.push_back( full_path );
-        }
-        //*****************************
-
-        //add the descriptors and labels to training Mat
-        Mat positive_descriptor_mat;
-        imtools::computeHOGDescriptorsMat( positive_descriptor_mat,
-                                           positiveSamplesList, hog_descr );
-
-        if( negativeDescriptorMat.empty() )
-            negativeDescriptorMat = positive_descriptor_mat.clone();
-        else
-            vconcat( negativeDescriptorMat, positive_descriptor_mat, negativeDescriptorMat );
-
-    }
-}
-
 void VisualWordDialog::on_trainMultipleSVMClassifierButton_clicked()
 {
-    //prepare negative samples, which are from natural image set
-    Mat negative_descriptor_mat;
-    prepareNegativeSamplesForMultipleSVMTraining( negative_descriptor_mat );
 
-    //SVM parameter setting
-    CvMat *weights = cvCreateMat( 2, 1, CV_32FC1 );
-    cvmSet( weights, 0, 0, 1.0 );
-    cvmSet( weights, 1, 0, 0.05 );
-    CvSVMParams svm_params;
-    svm_params.svm_type = SVM::C_SVC;
-    svm_params.C = 1.0;
-    svm_params.class_weights = weights;
-    svm_params.kernel_type = SVM::LINEAR;
-    svm_params.term_crit = TermCriteria( CV_TERMCRIT_ITER, 30, 1e-6 );
+    VisualWordDictionary dict;
 
-
-    HOGDescriptor *hog_descr = new HOGDescriptor( cvSize(80,80), cvSize( 8, 8 ),
-                                   cvSize( 8, 8 ), cvSize( 8, 8 ), 9  );
-
-    //train a SVM classifier for every visual word whose svm_score in depth space
-    //is bigger than 7.5
-    QString command = "SELECT class_id, class_path, image_path "
-            " FROM visual_word_2"
-            " WHERE available = 1 AND svm_score > 7.5 "
-            " ORDER BY class_id ;";
-    QSqlQuery query;
-    query.prepare( command );
-    assert( query.exec() );
-
-    std::map<int,Mat> positive_samples;
-    //get all samples for each positive class
-    while( query.next() ){
-        //get all patches of one class
-        int class_id = query.value(0).toInt();
-        QString path = query.value(1).toString() + QDir::separator() +
-                        query.value(2).toString();
-        QDir target_dir( path );
-        QStringList filters;
-        filters += "*.png";
-        QStringList positiveSamplesList;
-        foreach (QString file, target_dir.entryList(filters,QDir::Files)) {
-            QString full_path = path + QDir::separator() + file;
-            positiveSamplesList.push_back( full_path );
-        }
-        //*****************************
-
-        //add the descriptors and labels to training Mat
-        Mat positive_descriptor_mat;
-        imtools::computeHOGDescriptorsMat( positive_descriptor_mat,
-                                           positiveSamplesList, hog_descr );
-
-        if( positive_samples.count(class_id) == 0 )
-            positive_samples[class_id] = positive_descriptor_mat;
+    if( dict.trainDictionary() ){
+        ui->textBrowser->append("SVM training finished!");
     }
-
-
-
-    std::map<int,Mat>::const_iterator iter;
-    for( iter = positive_samples.begin(); iter != positive_samples.end(); iter++ ){
-        //for those which are not the current class, add them the negative samples
-        Mat other_class_mat;
-        std::map<int, Mat>::const_iterator iter_other;
-        for( iter_other = positive_samples.begin(); iter_other != positive_samples.end();
-             iter_other++ )
-            if( iter_other->first != iter->first ){
-                if( other_class_mat.empty() )
-                    other_class_mat = iter_other->second.clone();
-                else
-                    vconcat( other_class_mat, iter_other->second,
-                             other_class_mat );
-            }
-        //****************************************************************************
-
-        Mat negative_big_mat;
-        vconcat( negative_descriptor_mat, other_class_mat, negative_big_mat );
-
-        Mat positive_labels_mat( iter->second.rows, 1, CV_32FC1, Scalar(1.0) );
-        Mat negative_labels_mat( negative_big_mat.rows, 1, CV_32FC1, Scalar(-1.0));
-
-        //now we can have the training examples and labels for SVM trainging
-        Mat samples_matrixes, labels_matrixes;
-        vconcat( iter->second, negative_big_mat, samples_matrixes );
-        vconcat( positive_labels_mat, negative_labels_mat, labels_matrixes );
-
-        //svm training...
-        QString classifier_save_path = "svmData/visual_word_classifiers_2/visual_word_"
-                        + QString::number( iter->first ) + ".txt";
-        CvSVM svm;
-        svm.train( samples_matrixes, labels_matrixes, Mat(), Mat(), svm_params );
-        //svm.train_auto( samples_matrixes, labels_matrixes, Mat(), Mat(), svm_params, 2,
-        //                CvSVM::get_default_grid(CvSVM::C),
-        //                CvSVM::get_default_grid(CvSVM::GAMMA),
-        //                CvSVM::get_default_grid(CvSVM::P),
-        //                CvSVM::get_default_grid(CvSVM::NU),
-        //                CvSVM::get_default_grid(CvSVM::COEF),
-        //                CvSVM::get_default_grid(CvSVM::DEGREE),
-        //                true);
-        //CvSVMParams params_re = svm.get_params();
-        //float C = params_re.C;
-        //float P = params_re.p;
-        //float gamma = params_re.gamma;
-        //std::cout << "C:" << C << "		P:" << P << " 	gamma:" << gamma << std::endl;
-        svm.save( classifier_save_path.toLocal8Bit().data() );
-    }
-
-    ui->textBrowser->append("SVM training finished!");
 
 }
 
@@ -543,10 +389,10 @@ void VisualWordDialog::on_testClassifierButton_clicked()
                                 + QString::number(best_match_score));
         ui->textBrowser->append("Belongs to class " + QString::number(best_match_class_id ));
 
-        if( best_match_score > -1.0 ){
+        if( best_match_score > -0.5 ){
             //get the corresponding depthmap
             QString command = "SELECT class_path, depth_average_patch "
-                    " FROM visual_word "
+                    " FROM visual_word_2 "
                     " WHERE class_id = :class_id ;";
             QSqlQuery query;
             query.prepare(command);
@@ -568,30 +414,39 @@ void VisualWordDialog::on_testClassifierButton_clicked()
     VisualWord::cleanAllSVMClassifiers( classifiers );
 }
 
+static void generateInitDepthMap( std::vector<Mat> const &images, std::vector<Mat> &depths )
+{
+    std::vector<Mat>().swap( depths );
+    for( unsigned i = 0; i < images.size(); i++ ){
+        Mat depth( images[i].rows, images[i].cols, CV_8UC1, Scalar(0) );
+        int nr = depth.rows;
+        int nc = depth.cols * depth.channels();
+        for( int i = 0; i < nr; i++ ){
+            uchar* data = depth.ptr<uchar>(i);
+            for( int j = 0; j < nc; j++ ){
+                *data++ = int( double( nr - i ) / double(nr) * 255.0 ) ;
+            }
+        }
+        depths.push_back( depth );
+    }
+}
+
 static void initialDepthMap( std::vector<Mat> const &images, std::vector<Mat> &depths )
 {
+    std::vector<Mat>().swap( depths );
     for( unsigned i = 0; i < images.size(); i++ ){
         Mat depth = images[i].clone();
         depths.push_back( depth );
     }
 }
 
-void VisualWordDialog::on_convertAImageButton_clicked()
+void samplePatchesForDepthGeneration( const Mat &image,
+                                      std::vector<Mat> &pyrs,
+                                      std::vector< std::vector<Mat> > &patches,
+                                      std::vector< std::vector<Point> > &coordinates )
 {
-    if( ui_mainWindow->ImView->isEmpty() )
-        return;
-
-
-    Mat image = ui_mainWindow->ImView->getCurrentImage();
-
-
-    std::vector<Mat> pyrs;
-    std::vector< std::vector<Mat> > patches_array;
-    std::vector< std::vector<Point> > coordinates_array;
-    std::vector< std::vector<PATCH_TYPE> > overlappedPatchSymbols_array;
-    std::vector< std::vector<PATCH_TYPE> > flatPatchSymbols_array;
-
-    samplePatchesForDepthGeneration( image, patches_array, coordinates_array );
+    std::vector< std::vector< Mat > >().swap( patches );
+    std::vector< std::vector< Point > >().swap( coordinates );
 
     Patch *patchExtracter;
     patchExtracter = new Patch( 80 );
@@ -602,24 +457,30 @@ void VisualWordDialog::on_convertAImageButton_clicked()
     imPyramid.buildGaussianPyramid( image, pyrs );
     pyrs.erase( pyrs.begin() );
     pyrs.erase( pyrs.begin() );
+    pyrs.erase( pyrs.begin() + 1 );
+    pyrs.erase( pyrs.begin() + 1 );
 
+    std::vector<int> number_vector;
+    number_vector.push_back( 150 );
+    number_vector.push_back( 150 );
+
+    //sampling patches
+    std::vector< std::vector<Mat> > patches_array;
+    std::vector< std::vector<Point> > coordinates_array;
     std::vector<Mat> patches_in_single_image;
     std::vector<Point> coordinates_in_single_image;
-    std::vector<int> number_vector;
-    number_vector.push_back( 20 );
-    number_vector.push_back( 20 );
-    number_vector.push_back( 10 );
-    number_vector.push_back( 10 );
     for( unsigned int i = 0; i < pyrs.size(); i++ ){
         std::vector<Mat>().swap( patches_in_single_image );
         std::vector<Point>().swap( coordinates_in_single_image );
         patchExtracter->randomSamplePatches( pyrs[i], patches_in_single_image,
-                             coordinates_in_single_image, number_vector[i] );
+                                             coordinates_in_single_image, number_vector[i] );
         patches_array.push_back( patches_in_single_image );
         coordinates_array.push_back( coordinates_in_single_image );
     }
 
     //intialize overlap symbols and flatPatchSymbols
+    std::vector< std::vector<PATCH_TYPE> > overlappedPatchSymbols_array;
+    std::vector< std::vector<PATCH_TYPE> > flatPatchSymbols_array;
     overlappedPatchSymbols_array.assign( patches_array.size(), std::vector<PATCH_TYPE>() );
     flatPatchSymbols_array.assign( patches_array.size(), std::vector<PATCH_TYPE>() );
     for( unsigned int i = 0; i < patches_array.size(); i++ ){
@@ -638,81 +499,172 @@ void VisualWordDialog::on_convertAImageButton_clicked()
                                                 10.0,
                                                 DEVIATION );
 
+    //return only the positive patches
+    patches.assign( patches_array.size(), std::vector<Mat>() );
+    coordinates.assign( coordinates_array.size(), std::vector<Point>() );
+    for( unsigned i = 0; i < patches_array.size(); i++ ){
+        for( unsigned j = 0; j < patches_array[i].size(); j++ ){
+            if( overlappedPatchSymbols_array[i][j] == POSITIVE &&
+                    flatPatchSymbols_array[i][j] == POSITIVE ){
+                patches.at(i).push_back( patches_array[i][j] );
+                coordinates.at(i).push_back( coordinates_array[i][j] );
+            }
+        }
+    }
+
+    delete patchExtracter;
+}
+
+void sortedClassifiedResults( std::vector< std::vector< double > > score_array,
+                        std::vector< std::vector< int > > &sorted_index
+                        )
+{
+    std::vector< std::vector< int > >().swap( sorted_index );
+    sorted_index.assign( score_array.size(), std::vector< int >() );
+
+    for( unsigned i = 0; i < score_array.size(); i++ ){
+        imtools::idxSort( score_array[i], sorted_index[i], true );
+    }
+
+}
+
+void classifyAllPatches( const std::vector< std::vector< Mat > > patches_array,
+                         std::vector< std::vector< int > > &result_class,
+                         std::vector< std::vector< double > > &svm_score )
+{
     HOGDescriptor *hog_descr = new HOGDescriptor( cvSize(80,80), cvSize( 8, 8 ),
                                                   cvSize( 8, 8 ), cvSize( 8, 8 ), 9  );
+
+    //initialize result_class and svm_score
+    std::vector< std::vector< int > >().swap( result_class );
+    std::vector< std::vector< double > >().swap( svm_score );
+    result_class.assign( patches_array.size(), std::vector<int>() );
+    svm_score.assign( patches_array.size(), std::vector<double>() );
+    for( unsigned i = 0; i < patches_array.size(); i++ ){
+        result_class[i].assign( patches_array[i].size(), -1 );
+        svm_score[i].assign( patches_array[i].size(), -10.0 );
+    }
+
     //load all the SVM classifier
     std::map<int, CvSVM*> classifiers;
     VisualWord::loadAllSVMClassifiers( classifiers );
 
-    std::vector<Mat> depths;
-    initialDepthMap( pyrs, depths );
+    //classify all patches
     for( unsigned int i = 0; i < patches_array.size(); i++ ){
         for(  unsigned int j = 0; j < patches_array[i].size(); j++ ){
-
-            if( overlappedPatchSymbols_array[i][j] == POSITIVE &&
-                            flatPatchSymbols_array[i][j] == POSITIVE ){
-                int best_match_class_id = -1;
-                double best_match_score = -10.0;
-                std::map<int, CvSVM*>::const_iterator iter;
-                for( iter = classifiers.begin(); iter != classifiers.end(); iter++ ){
-                    std::vector<float> descr;
-                    hog_descr->compute( patches_array[i][j], descr, Size(0, 0 ), Size( 0, 0 ) );
-                    float score = -( iter->second->predict( Mat(descr).t(), true ) );
-                    if( score > best_match_score ){
-                        best_match_score = score;
-                        best_match_class_id = iter->first;
-                    }
-                }
-
-                if( best_match_score > -1.0 ){
-                    //get the corresponding depthmap
-                    QString command = "SELECT class_path, depth_average_patch "
-                                      " FROM visual_word_2 "
-                                      " WHERE class_id = :class_id ;";
-                    QSqlQuery query;
-                    query.prepare(command);
-                    query.bindValue(":class_id", best_match_class_id );
-                    CV_Assert( query.exec() );
-
-                    if( query.size() == 0 )
-                        break;
-                    query.first();
-                    QString depthmap_path = query.value(0).toString() + QDir::separator() +
-                                    query.value(1).toString();
-                    Mat depthmap = imread( depthmap_path.toLocal8Bit().data() );
-                    Filters filters;
-                    filters.guidedFilter( depthmap, patches_array[i][j], depthmap, 30, 0.1 );
-                    normalize( depthmap, depthmap, 0, 1.0, NORM_MINMAX, CV_32FC1 );
-                    double ratio = ( double( depths[i].rows ) - coordinates_array[i][j].y ) /
-                            depths[i].rows * 255.0;
-                    Mat temp = depthmap * ratio;
-                    temp.convertTo( depthmap, CV_8UC1 );
-
-                    if( depths[i].channels() == 3 && depthmap.channels() == 1 )
-                        cvtColor( depthmap, depthmap, CV_GRAY2BGR );
-
-                    Mat imageROI = depths[i]( cv::Rect( coordinates_array[i][j].x,
-                                                         coordinates_array[i][j].y,
-                                                         depthmap.cols, depthmap.rows ) );
-                    cv::addWeighted( imageROI, 0., depthmap, 1.0, 0., imageROI );
-
+            int best_match_class_id = -1;
+            double best_match_score = -10.0;
+            std::map<int, CvSVM*>::const_iterator iter;
+            Mat temp;
+            cvtColor( patches_array[i][j], temp, CV_BGR2GRAY );
+            cv::equalizeHist( temp, temp );
+            for( iter = classifiers.begin(); iter != classifiers.end(); iter++ ){
+                std::vector<float> descr;
+                hog_descr->compute( temp, descr, Size(0, 0 ), Size( 0, 0 ) );
+                float score = -( iter->second->predict( Mat(descr).t(), true ) );
+                if( score > best_match_score ){
+                    best_match_score = score;
+                    best_match_class_id = iter->first;
                 }
             }
 
+            result_class[i][j] = best_match_class_id;
+            svm_score[i][j] = best_match_score;
+        }
+    }
+
+}
+
+Mat getPatchFromDatabaseForGivenID( int class_id )
+{
+    QString command = "SELECT class_path, depth_average_patch "
+                      " FROM visual_word_2 "
+                      " WHERE class_id = :class_id ;";
+    QSqlQuery query;
+    query.prepare(command);
+    query.bindValue(":class_id", class_id );
+    CV_Assert( query.exec() );
+
+    if( query.size() == 0 )
+        return Mat();
+    query.first();
+    QString depthmap_path = query.value(0).toString() + QDir::separator() +
+                    query.value(1).toString();
+    Mat depthmap = imread( depthmap_path.toLocal8Bit().data() , CV_LOAD_IMAGE_GRAYSCALE );
+
+    return depthmap.clone();
+
+}
+
+void VisualWordDialog::on_convertAImageButton_clicked()
+{
+    if( ui_mainWindow->ImView->isEmpty() )
+        return;
+
+    std::vector<unsigned> nbr_vector;
+    nbr_vector.push_back( 10 );
+    nbr_vector.push_back( 3 );
+
+    Mat image = ui_mainWindow->ImView->getCurrentImage();
+
+    std::vector<Mat> pyrs;
+    std::vector< std::vector<Mat> > patches_array;
+    std::vector< std::vector<Point> > coordinates_array;
+
+    samplePatchesForDepthGeneration( image, pyrs, patches_array, coordinates_array );
+
+    std::vector< std::vector< int > > class_array;
+    std::vector< std::vector< double > > score_array;
+    std::vector< std::vector< int > > sorted_index_array;
+    classifyAllPatches( patches_array, class_array, score_array );
+    sortedClassifiedResults( score_array, sorted_index_array );
+
+    std::vector<Mat> depths;
+    generateInitDepthMap( pyrs, depths );
+    for( unsigned int i = 0; i < sorted_index_array.size(); i++ ){
+        for(  unsigned j = 0; j < nbr_vector[i] && j < sorted_index_array[i].size(); j++ ){
+            int tail = nbr_vector[i] < sorted_index_array[i].size() ?
+                                    nbr_vector[i] : sorted_index_array[i].size();
+            int current_index = sorted_index_array[i][ tail - j - 1];
+            if( score_array[i][current_index] > -0.5 ){
+                //get the corresponding depthmap
+                Mat depthmap;
+                depthmap = getPatchFromDatabaseForGivenID( class_array[i][current_index] );
+                //Filters filters;
+                //filters.guidedFilter( depthmap, patches_array[i][current_index],
+                //                      depthmap, 30, 0.1 );
+                depthmap.convertTo(depthmap, CV_32FC1 );
+
+                normalize( depthmap, depthmap, 0, 1.0, NORM_MINMAX, CV_32FC1 );
+                double ratio = ( double( depths[i].rows ) - coordinates_array[i][current_index].y ) /
+                                depths[i].rows * 255.0;
+                Mat temp = depthmap * ratio;
+                temp.convertTo( depthmap, CV_8UC1 );
+
+                if( depths[i].channels() == 3 && depthmap.channels() == 1 )
+                    cvtColor( depthmap, depthmap, CV_GRAY2BGR );
+
+                Mat imageROI = depths[i]( cv::Rect( coordinates_array[i][current_index].x,
+                                                    coordinates_array[i][current_index].y,
+                                                    depthmap.cols, depthmap.rows ) );
+                cv::addWeighted( imageROI, 0., depthmap, 1.0, 0., imageROI );
+
+            }
         }
     }
 
     for( unsigned i = 0; i < depths.size(); i++ ){
         Mat elarge_image;
-        cv::resize( depths[i], elarge_image, image.size() );
+
+        Mat temp;
+        Filters filters;
+        filters.guidedFilter( depths[i], pyrs[i],
+                              temp, 45, 0.1 );
+
+        cv::resize( temp, elarge_image, image.size() );
+
+        ui_mainWindow->ImView->setPaintImage( depths[i]);
         ui_mainWindow->ImView->setPaintImage( elarge_image );
     }
-    delete patchExtracter;
 }
 
-void samplePatchesForDepthGeneration( const Mat &image,
-                                      std::vector<Mat> patches,
-                                      std::vector<Point> coordinates )
-{
-
-}
