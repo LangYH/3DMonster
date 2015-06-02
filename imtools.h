@@ -37,6 +37,10 @@ public:
     static void computeHOGDescriptorsMat(Mat &descriptorMat,
                                          const QStringList &imPath, const HOGDescriptor *hogDesr);
 
+    static void computeHOGDescriptorsMat(Mat &descriptorMat,
+                                  const std::vector<Mat> patches,
+                                  const HOGDescriptor *hogDesr);
+
     //get all the depthmap from depthlist, store in depthMaps
     static void getDepthMapsFromDepthlist(vector<Mat> &depthMaps,
                                           QStringList const &depthlist );

@@ -4,6 +4,7 @@
 #include <QDialog>
 #include <QSqlDatabase>
 #include "visualword.h"
+#include "visualworddictionary.h"
 
 
 namespace Ui {
@@ -51,12 +52,14 @@ private:
     QSqlDatabase *db;
 
     VisualWord *vw;
+    VisualWordDictionary *dict;
 
     QStringList D1, D2, N1, N2;
 
 public:
     void setDatabase(QSqlDatabase *database);
     void setMainWindowUi(Ui::MainWindow *ui);
+    void classifyAllPatches(const std::vector<std::vector<Mat> > patches_array, std::vector<std::vector<int> > &result_class, std::vector<std::vector<double> > &svm_score);
 };
 
 #endif // VISUALWORDDIALOG_H

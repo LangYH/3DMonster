@@ -93,6 +93,33 @@ void imtools::computeHOGDescriptorsMat(Mat &descriptorMat,
 
 }
 
+void imtools::computeHOGDescriptorsMat(Mat &descriptorMat,
+                                       const std::vector<Mat> patches,
+                                       const HOGDescriptor *hogDesr)
+{
+    //compute all descriptors of training images
+    //store in descriptorMat, for each row of it is a descriptor of one image
+    descriptorMat.create( patches.size(), 900, CV_32FC1 );
+    int nr = descriptorMat.rows;
+    int nc = descriptorMat.cols;
+    for( int j=0; j<nr; j++ ){
+        float *data = descriptorMat.ptr<float>(j);
+
+        Mat image = patches.at(j).clone();
+
+        if( image.channels() == 3 ){
+            cvtColor( image, image, CV_BGR2GRAY );
+        }
+
+        std::vector<float> descr;
+        hogDesr->compute( patches.at(j), descr, Size(0, 0 ), Size( 0, 0 ) );
+        for( int i = 0; i < nc; i++ ){
+            *data++ = descr[i];
+        }
+    }
+
+}
+
 void imtools::getDepthMapsFromDepthlist(std::vector<Mat> &depthMaps, const QStringList &depthlist )
 {
     FileStorage fs;

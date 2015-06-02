@@ -40,7 +40,8 @@ SOURCES += main.cpp\
     pyramiddialog.cpp \
     patchesdialog.cpp \
     visualworddialog.cpp \
-    visualworddictionary.cpp
+    visualworddictionary.cpp \
+    depthmakerwithvisualword.cpp
 
 HEADERS  += mainwindow.h \
     databasemanager.h \
@@ -68,7 +69,8 @@ HEADERS  += mainwindow.h \
     pyramiddialog.h \
     patchesdialog.h \
     visualworddialog.h \
-    visualworddictionary.h
+    visualworddictionary.h \
+    depthmakerwithvisualword.h
 
 FORMS    += mainwindow.ui \
     connectdatabasedialog.ui \
