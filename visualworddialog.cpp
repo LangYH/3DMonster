@@ -441,7 +441,7 @@ void VisualWordDialog::on_convertAImageButton_clicked()
     //depth_maker.generateDepthmap( ui_mainWindow->ImView->getCurrentImage(),
     //                                      results );
 
-    //for( int i = 0; i < results.size(); i++ ){
+    //for( unsigned i = 0; i < results.size(); i++ ){
     //    ui_mainWindow->ImView->setPaintImage( results[i] );
     //}
 

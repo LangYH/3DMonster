@@ -14,7 +14,7 @@ public:
     DepthMakerWithVisualWord();
     ~DepthMakerWithVisualWord();
     Mat generateDepthmapInMultiScale( const Mat image );
-    static void searchImageForGivenWord(const Mat &image, MySVM &svm,
+    void searchImageForGivenWord(const Mat &image, MySVM &svm,
                                   std::vector<Rect> &filtered_result,
                                   std::vector<double> &filtered_scores );
 

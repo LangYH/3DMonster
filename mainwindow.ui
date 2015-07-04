@@ -484,6 +484,7 @@
     </property>
     <addaction name="actionPatches"/>
     <addaction name="actionVisual_Word_Training"/>
+    <addaction name="actionVisual_Word_Test"/>
    </widget>
    <widget class="QMenu" name="menuFeatures">
     <property name="title">
@@ -699,6 +700,11 @@
   <action name="actionVisual_Word_Training">
    <property name="text">
     <string>Visual Word Training</string>
+   </property>
+  </action>
+  <action name="actionVisual_Word_Test">
+   <property name="text">
+    <string>Visual Word Test</string>
    </property>
   </action>
  </widget>

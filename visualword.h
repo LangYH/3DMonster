@@ -3,9 +3,9 @@
 #include "opencv2/opencv.hpp"
 #include <QStringList>
 #include "opencv2/gpu/gpu.hpp"
+#include <CustomType.h>
 using namespace cv;
 
-enum CROSS_VALIDATION_SYMBOL { STAGE_ONE, STAGE_TWO };
 //notice:
 //At STAGE_ONE: D1, N1 as training data, D2 as discovery data
 //At STAGE_TWO: D2, N2 as trianing data, D1 as discovery data

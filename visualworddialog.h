@@ -54,8 +54,6 @@ private:
     VisualWord *vw;
     VisualWordDictionary *dict;
 
-    QStringList D1, D2, N1, N2;
-
 public:
     void setDatabase(QSqlDatabase *database);
     void setMainWindowUi(Ui::MainWindow *ui);

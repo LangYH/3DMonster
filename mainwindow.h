@@ -20,6 +20,7 @@
 #include "pyramiddialog.h"
 #include "patchesdialog.h"
 #include "informationpanel.h"
+#include "visualwordtestdialog.h"
 
 using namespace cv;
 
@@ -80,11 +81,14 @@ private slots:
 
     void on_actionVisual_Word_Training_triggered();
 
+    void on_actionVisual_Word_Test_triggered();
+
 private:
     Ui::MainWindow *ui;
     DepthMapGenerationWithKmeansDialog *depthMapGenerationWithKmeansDlg;
     DepthMapGenerationWithKNNDialog *depthMapGenerationWithKNNDlg;
     VisualWordDialog *visualWordDlg;
+    VisualWordTestDialog *visualWordTestDlg;
     PyramidDialog *pyramidDlg;
     PatchesDialog *patchesDlg;
     InformationPanel *informationOutput;

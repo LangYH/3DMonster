@@ -136,8 +136,6 @@ void VisualWordDictionary::prepareNegativeSamplesForMultipleSVMTraining(Mat &neg
 
 bool VisualWordDictionary::trainMultipleSVMClassifier()
 {
-        QElapsedTimer timer;
-        timer.start();
     loadNaturalImages();
     //prepare negative samples, which are from natural image set
     Mat negative_descriptor_Mat;
@@ -197,47 +195,47 @@ bool VisualWordDictionary::trainMultipleSVMClassifier()
         MySVM svm;
         svm.train( samples_matrixes, labels_matrixes, Mat(), Mat(), svm_params );
 
+        svm.save( classifier_save_path.toLocal8Bit().data() );
+
         //reinforcement learning
-        std::vector<Mat> hard_examples;
+        //std::vector<Mat> hard_examples;
 
-        QElapsedTimer timer;
-        timer.start();
-        getHardExmaples( svm, hard_examples );
-        std::cout << "Using time: " << timer.elapsed() / 1000.0
-                  << " seconds " << std::endl;
-        std::cout << hard_examples.size() << " hard examples have been found " << std::endl;
+        //QElapsedTimer timer;
+        //timer.start();
+        //getHardExmaples( svm, hard_examples );
+        //std::cout << "Using time: " << timer.elapsed() / 1000.0
+        //          << " seconds " << std::endl;
+        //std::cout << hard_examples.size() << " hard examples have been found " << std::endl;
 
-        if( hard_examples.size() > 0 ){
-            Mat hard_examples_descriptor_Mat;
-            imtools::computeHOGDescriptorsMat( hard_examples_descriptor_Mat,
-                                               hard_examples, hog_descr );
+        //if( hard_examples.size() > 0 ){
+        //    Mat hard_examples_descriptor_Mat;
+        //    imtools::computeHOGDescriptorsMat( hard_examples_descriptor_Mat,
+        //                                       hard_examples, hog_descr );
 
-            Mat hard_examples_labels_Mat( hard_examples_descriptor_Mat.rows, 1,
-                                          CV_32FC1, Scalar(-1.0 ) );
-            Mat samples_matrixes2, labels_matrixes2;
-            vconcat( samples_matrixes, hard_examples_descriptor_Mat, samples_matrixes2 );
-            vconcat( labels_matrixes, hard_examples_labels_Mat, labels_matrixes2 );
-            svm.train( samples_matrixes2, labels_matrixes2, Mat(), Mat(), svm_params );
+        //    Mat hard_examples_labels_Mat( hard_examples_descriptor_Mat.rows, 1,
+        //                                  CV_32FC1, Scalar(-1.0 ) );
+        //    Mat samples_matrixes2, labels_matrixes2;
+        //    vconcat( samples_matrixes, hard_examples_descriptor_Mat, samples_matrixes2 );
+        //    vconcat( labels_matrixes, hard_examples_labels_Mat, labels_matrixes2 );
+        //    svm.train( samples_matrixes2, labels_matrixes2, Mat(), Mat(), svm_params );
 
-            svm.save( classifier_save_path.toLocal8Bit().data() );
+        //    svm.save( classifier_save_path.toLocal8Bit().data() );
 
-            //svm.train_auto( samples_matrixes, labels_matrixes, Mat(), Mat(), svm_params, 2,
-            //                CvSVM::get_default_grid(CvSVM::C),
-            //                CvSVM::get_default_grid(CvSVM::GAMMA),
-            //                CvSVM::get_default_grid(CvSVM::P),
-            //                CvSVM::get_default_grid(CvSVM::NU),
-            //                CvSVM::get_default_grid(CvSVM::COEF),
-            //                CvSVM::get_default_grid(CvSVM::DEGREE),
-            //                true);
-            //CvSVMParams params_re = svm.get_params();
-            //float C = params_re.C;
-            //float P = params_re.p;
-            //float gamma = params_re.gamma;
-            //std::cout << "C:" << C << "		P:" << P << " 	gamma:" << gamma << std::endl;
-        }
+        //    //svm.train_auto( samples_matrixes, labels_matrixes, Mat(), Mat(), svm_params, 2,
+        //    //                CvSVM::get_default_grid(CvSVM::C),
+        //    //                CvSVM::get_default_grid(CvSVM::GAMMA),
+        //    //                CvSVM::get_default_grid(CvSVM::P),
+        //    //                CvSVM::get_default_grid(CvSVM::NU),
+        //    //                CvSVM::get_default_grid(CvSVM::COEF),
+        //    //                CvSVM::get_default_grid(CvSVM::DEGREE),
+        //    //                true);
+        //    //CvSVMParams params_re = svm.get_params();
+        //    //float C = params_re.C;
+        //    //float P = params_re.p;
+        //    //float gamma = params_re.gamma;
+        //    //std::cout << "C:" << C << "		P:" << P << " 	gamma:" << gamma << std::endl;
+        //}
     }
-        std::cout << "Using time: " << timer.elapsed() / 1000.0
-                  << " seconds " << std::endl;
 
     return true;
 

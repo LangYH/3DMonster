@@ -30,6 +30,7 @@ MainWindow::MainWindow(QWidget *parent) :
     depthMapGenerationWithKmeansDlg = NULL;
     depthMapGenerationWithKNNDlg = NULL;
     visualWordDlg = NULL;
+    visualWordTestDlg = NULL;
     pyramidDlg = NULL;
     patchesDlg = NULL;
 
@@ -266,130 +267,130 @@ void MainWindow::on_actionDFT_triggered()
 
 void MainWindow::on_actionTest_triggered()
 {
-    Mat img_1 = ui->ImView->getCurrentImage();
-    Mat img_2 = ui->ImView->getSecondImage();
+    //Mat img_1 = ui->ImView->getCurrentImage();
+    //Mat img_2 = ui->ImView->getSecondImage();
 
-    if( !img_1.data || !img_2.data ){
-        return;
-    }
-    int minHessian = 400;
+    //if( !img_1.data || !img_2.data ){
+    //    return;
+    //}
+    //int minHessian = 400;
 
-    SurfFeatureDetector detector( minHessian );
+    //SurfFeatureDetector detector( minHessian );
 
-    std::vector<KeyPoint> keypoints_1, keypoints_2;
+    //std::vector<KeyPoint> keypoints_1, keypoints_2;
 
-    detector.detect( img_1, keypoints_1 );
-    detector.detect( img_2, keypoints_2 );
+    //detector.detect( img_1, keypoints_1 );
+    //detector.detect( img_2, keypoints_2 );
 
-    //--Step2:Calculate descriptors( feature vectors )
-    SurfDescriptorExtractor extractor;
+    ////--Step2:Calculate descriptors( feature vectors )
+    //SurfDescriptorExtractor extractor;
 
-    Mat descriptors_1, descriptors_2;
+    //Mat descriptors_1, descriptors_2;
 
-    extractor.compute( img_1, keypoints_1,  descriptors_1);
-    extractor.compute( img_2, keypoints_2, descriptors_2);
+    //extractor.compute( img_1, keypoints_1,  descriptors_1);
+    //extractor.compute( img_2, keypoints_2, descriptors_2);
 
-    //--step 3:Matching descriptor vectors with brute force mathcher
-    BFMatcher matcher( NORM_L2 );
-    std::vector< DMatch > matches;
-    matcher.match( descriptors_1, descriptors_2, matches );
+    ////--step 3:Matching descriptor vectors with brute force mathcher
+    //BFMatcher matcher( NORM_L2 );
+    //std::vector< DMatch > matches;
+    //matcher.match( descriptors_1, descriptors_2, matches );
 
-    //--Draw mathces
-    Mat img_matches;
-    drawMatches( img_1, keypoints_1, img_2, keypoints_2, matches, img_matches );
-    ui->ImView->setPaintImage( img_matches );
+    ////--Draw mathces
+    //Mat img_matches;
+    //drawMatches( img_1, keypoints_1, img_2, keypoints_2, matches, img_matches );
+    //ui->ImView->setPaintImage( img_matches );
 
 
 }
 
 void MainWindow::on_actionObject_detect_triggered()
 {
-    Mat img_color_1 = ui->ImView->getCurrentImage();
-    Mat img_color_2 = ui->ImView->getSecondImage();
+    //Mat img_color_1 = ui->ImView->getCurrentImage();
+    //Mat img_color_2 = ui->ImView->getSecondImage();
 
-    if( !img_color_1.data || !img_color_2.data ){
-        return;
-    }
+    //if( !img_color_1.data || !img_color_2.data ){
+    //    return;
+    //}
 
-    Mat img_1, img_2;
-    cvtColor( img_color_1, img_1, CV_RGB2GRAY );
-    cvtColor( img_color_2, img_2, CV_RGB2GRAY );
+    //Mat img_1, img_2;
+    //cvtColor( img_color_1, img_1, CV_RGB2GRAY );
+    //cvtColor( img_color_2, img_2, CV_RGB2GRAY );
 
-    int minHessian = 400;
+    //int minHessian = 400;
 
-    SurfFeatureDetector detector(minHessian);
+    //SurfFeatureDetector detector(minHessian);
 
-    std::vector<KeyPoint> keypoints_1, keypoints_2;
-    detector.detect( img_1, keypoints_1 );
-    detector.detect( img_2, keypoints_2 );
+    //std::vector<KeyPoint> keypoints_1, keypoints_2;
+    //detector.detect( img_1, keypoints_1 );
+    //detector.detect( img_2, keypoints_2 );
 
-    SurfDescriptorExtractor extractor;
+    //SurfDescriptorExtractor extractor;
 
-    Mat descriptors_1, descriptors_2;
+    //Mat descriptors_1, descriptors_2;
 
-    extractor.compute( img_1, keypoints_1, descriptors_1 );
-    extractor.compute( img_2, keypoints_2, descriptors_2 );
+    //extractor.compute( img_1, keypoints_1, descriptors_1 );
+    //extractor.compute( img_2, keypoints_2, descriptors_2 );
 
-    FlannBasedMatcher matcher;
-    std::vector<DMatch> matches;
-    matcher.match( descriptors_1, descriptors_2, matches );
+    //FlannBasedMatcher matcher;
+    //std::vector<DMatch> matches;
+    //matcher.match( descriptors_1, descriptors_2, matches );
 
-    //--Quick calculation of max and min distance between keypoints
-    double max_dist = 0; double min_dist = 100;
-    for( int i = 0; i < descriptors_1.rows; i++ ){
-        double dist = matches[i].distance;
-        if( dist < min_dist ) min_dist = dist;
-        if( dist > max_dist ) max_dist = dist;
+    ////--Quick calculation of max and min distance between keypoints
+    //double max_dist = 0; double min_dist = 100;
+    //for( int i = 0; i < descriptors_1.rows; i++ ){
+    //    double dist = matches[i].distance;
+    //    if( dist < min_dist ) min_dist = dist;
+    //    if( dist > max_dist ) max_dist = dist;
 
-    }
+    //}
 
-    printf( "--Max dist: %f \n", max_dist );
-    printf( "--Min dist: %f \n", min_dist );
+    //printf( "--Max dist: %f \n", max_dist );
+    //printf( "--Min dist: %f \n", min_dist );
 
-    std::vector< DMatch > good_matches;
+    //std::vector< DMatch > good_matches;
 
-    for( int i = 0; i < descriptors_1.rows; i++ ){
-        if( matches[i].distance <= 3*min_dist ){
-            good_matches.push_back( matches[i]);
-        }
-    }
-    Mat img_matches;
-    drawMatches( img_1, keypoints_1, img_2, keypoints_2, good_matches, img_matches,
-                Scalar::all(-1), Scalar::all(-1), vector<char>(),
-                DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
+    //for( int i = 0; i < descriptors_1.rows; i++ ){
+    //    if( matches[i].distance <= 3*min_dist ){
+    //        good_matches.push_back( matches[i]);
+    //    }
+    //}
+    //Mat img_matches;
+    //drawMatches( img_1, keypoints_1, img_2, keypoints_2, good_matches, img_matches,
+    //            Scalar::all(-1), Scalar::all(-1), vector<char>(),
+    //            DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
 
-    //localize the object
-    std::vector<Point2f> obj;
-    std::vector<Point2f> scene;
+    ////localize the object
+    //std::vector<Point2f> obj;
+    //std::vector<Point2f> scene;
 
-    for( int i = 0; i < int(good_matches.size()); i++ ){
-        //get the keypoints from the good matches
-        obj.push_back( keypoints_1[ good_matches[i].queryIdx ].pt );
-        scene.push_back( keypoints_2[ good_matches[i].trainIdx ].pt);
-    }
+    //for( int i = 0; i < int(good_matches.size()); i++ ){
+    //    //get the keypoints from the good matches
+    //    obj.push_back( keypoints_1[ good_matches[i].queryIdx ].pt );
+    //    scene.push_back( keypoints_2[ good_matches[i].trainIdx ].pt);
+    //}
 
-    Mat H = findHomography( obj, scene, CV_RANSAC );
+    //Mat H = findHomography( obj, scene, CV_RANSAC );
 
-    //--get the coners from the image_1( the object to be detected )
-    std::vector<Point2f> obj_coners(4);
-    obj_coners[0] = cvPoint( 0, 0 );
-    obj_coners[1] = cvPoint( img_1.cols, 0 );
-    obj_coners[2] = cvPoint( img_1.cols, img_1.rows );
-    obj_coners[3] = cvPoint( 0, img_1.rows );
-    std::vector<Point2f> scene_coners(4);
+    ////--get the coners from the image_1( the object to be detected )
+    //std::vector<Point2f> obj_coners(4);
+    //obj_coners[0] = cvPoint( 0, 0 );
+    //obj_coners[1] = cvPoint( img_1.cols, 0 );
+    //obj_coners[2] = cvPoint( img_1.cols, img_1.rows );
+    //obj_coners[3] = cvPoint( 0, img_1.rows );
+    //std::vector<Point2f> scene_coners(4);
 
-    perspectiveTransform( obj_coners, scene_coners, H );
-    //--Draw lines between the coners
-    line( img_matches, scene_coners[0] + Point2f( img_1.cols, 0 ), scene_coners[1]+Point2f(img_1.cols,0 ),
-            Scalar(0,255,0), 4);
-    line( img_matches, scene_coners[1] + Point2f( img_1.cols, 0 ), scene_coners[2]+Point2f(img_1.cols,0 ),
-            Scalar(0,255,0), 4);
-    line( img_matches, scene_coners[2] + Point2f( img_1.cols, 0 ), scene_coners[3]+Point2f(img_1.cols,0 ),
-            Scalar(0,255,0), 4);
-    line( img_matches, scene_coners[3] + Point2f( img_1.cols, 0 ), scene_coners[0]+Point2f(img_1.cols,0 ),
-            Scalar(0,255,0), 4);
+    //perspectiveTransform( obj_coners, scene_coners, H );
+    ////--Draw lines between the coners
+    //line( img_matches, scene_coners[0] + Point2f( img_1.cols, 0 ), scene_coners[1]+Point2f(img_1.cols,0 ),
+    //        Scalar(0,255,0), 4);
+    //line( img_matches, scene_coners[1] + Point2f( img_1.cols, 0 ), scene_coners[2]+Point2f(img_1.cols,0 ),
+    //        Scalar(0,255,0), 4);
+    //line( img_matches, scene_coners[2] + Point2f( img_1.cols, 0 ), scene_coners[3]+Point2f(img_1.cols,0 ),
+    //        Scalar(0,255,0), 4);
+    //line( img_matches, scene_coners[3] + Point2f( img_1.cols, 0 ), scene_coners[0]+Point2f(img_1.cols,0 ),
+    //        Scalar(0,255,0), 4);
 
-    ui->ImView->setPaintImage( img_matches );
+    //ui->ImView->setPaintImage( img_matches );
 
 
 }
@@ -627,5 +628,19 @@ void MainWindow::on_actionVisual_Word_Training_triggered()
     visualWordDlg->raise();
     visualWordDlg->activateWindow();
 
+
+}
+
+void MainWindow::on_actionVisual_Word_Test_triggered()
+{
+    if( !visualWordTestDlg ){
+        visualWordTestDlg = new VisualWordTestDialog(this);
+        visualWordTestDlg->setMainWindowUi( ui );
+        visualWordTestDlg->setDatabase( &db );
+    }
+
+    visualWordTestDlg->show();
+    visualWordTestDlg->raise();
+    visualWordTestDlg->activateWindow();
 
 }

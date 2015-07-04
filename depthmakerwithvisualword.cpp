@@ -8,6 +8,7 @@
 DepthMakerWithVisualWord::DepthMakerWithVisualWord()
 {
     dict = new VisualWordDictionary();
+    dict->loadAllSVMClassifiers();
 }
 
 DepthMakerWithVisualWord::~DepthMakerWithVisualWord()
@@ -121,6 +122,8 @@ void DepthMakerWithVisualWord::generateDepthmap(const Mat &image,
 
         Mat temp;
         Filters filters;
+        imshow( "depths", depths[i]);
+        waitKey(0);
         filters.guidedFilter( depths[i], pyrs[i],
                               temp, 45, 0.1 );
 
@@ -158,7 +161,10 @@ void DepthMakerWithVisualWord::initialDepthMap(const std::vector<Mat> &images, s
     }
 }
 
-void DepthMakerWithVisualWord::samplePatchesForDepthGeneration(const Mat &image, std::vector<Mat> &pyrs, std::vector<std::vector<Mat> > &patches, std::vector<std::vector<Point> > &coordinates)
+void DepthMakerWithVisualWord::samplePatchesForDepthGeneration(const Mat &image,
+                                                               std::vector<Mat> &pyrs,
+                                                               std::vector<std::vector<Mat> > &patches,
+                                                               std::vector<std::vector<Point> > &coordinates)
 {
     std::vector< std::vector< Mat > >().swap( patches );
     std::vector< std::vector< Point > >().swap( coordinates );
@@ -242,7 +248,9 @@ void DepthMakerWithVisualWord::sortedClassifiedResults(std::vector<std::vector<d
 
 }
 
-void DepthMakerWithVisualWord::classifyAllPatches(const std::vector<std::vector<Mat> > patches_array, std::vector<std::vector<int> > &result_class, std::vector<std::vector<double> > &svm_score)
+void DepthMakerWithVisualWord::classifyAllPatches(const std::vector<std::vector<Mat> > patches_array,
+                                                  std::vector<std::vector<int> > &result_class,
+                                                  std::vector<std::vector<double> > &svm_score)
 {
     //initialize result_class and svm_score
     std::vector< std::vector< int > >().swap( result_class );
@@ -255,8 +263,8 @@ void DepthMakerWithVisualWord::classifyAllPatches(const std::vector<std::vector<
     }
 
     //load all the SVM classifier
-    std::map<int, CvSVM*> classifiers;
-    VisualWord::loadAllSVMClassifiers( classifiers );
+    //std::map<int, CvSVM*> classifiers;
+    //VisualWord::loadAllSVMClassifiers( classifiers );
 
     //classify all patches
     for( unsigned int i = 0; i < patches_array.size(); i++ ){
