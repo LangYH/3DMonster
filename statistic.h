@@ -31,6 +31,11 @@ public:
     //compute cosine distance of two matrix
     static double computeCosineDistance(const Mat &patch1, const Mat &patch2);
 
+    //compute deviation of given matrixes
+    static double computeDeviationOfMatrixes( const std::vector<Mat> &patches );
+
+    //Person correlation coeficient
+    static double computePersonSimlarity(const Mat &matrix1, const Mat &matrix2);
 };
 
 #endif // STATISTIC_H

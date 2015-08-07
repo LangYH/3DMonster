@@ -3,12 +3,12 @@
 
 #include <QDialog>
 #include "patch.h"
-#include "ui_mainwindow.h"
 #include "informationpanel.h"
 #include <QSqlQuery>
 
 namespace Ui {
 class PatchesDialog;
+class MainWindow;
 }
 
 class PatchesDialog : public QDialog

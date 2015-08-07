@@ -20,14 +20,14 @@
    <item row="2" column="1">
     <widget class="QDoubleSpinBox" name="sigmaValueBox">
      <property name="value">
-      <double>20.000000000000000</double>
+      <double>5.000000000000000</double>
      </property>
     </widget>
    </item>
    <item row="1" column="1">
     <widget class="QDoubleSpinBox" name="sigmaSpaceBox">
      <property name="value">
-      <double>20.000000000000000</double>
+      <double>5.000000000000000</double>
      </property>
     </widget>
    </item>
@@ -51,7 +51,7 @@
    <item row="0" column="1">
     <widget class="QSpinBox" name="wsizeBox">
      <property name="value">
-      <number>70</number>
+      <number>15</number>
      </property>
     </widget>
    </item>

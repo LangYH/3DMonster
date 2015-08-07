@@ -172,5 +172,4 @@ void Filters::guidedFilter( Mat const &srcImage, Mat const &mask, Mat &dstImage,
     Mat result = Imeana + b;
     imtools::matrixNormalize( result, dstImage );
 
-
 }

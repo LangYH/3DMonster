@@ -2,6 +2,7 @@
 #include "ui_depthmapgenerationwithknndialog.h"
 #include "depthmapgeneratingalgorithms.h"
 #include <QElapsedTimer>
+#include "ui_mainwindow.h"
 
 DepthMapGenerationWithKNNDialog::DepthMapGenerationWithKNNDialog(QWidget *parent) :
     QDialog(parent),

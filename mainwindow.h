@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include "ui_mainwindow.h"
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/core/core.hpp"
 #include "opencv2/features2d/features2d.hpp"
@@ -15,9 +16,11 @@
 #include "convertdialoghelper.h"
 #include "depthmapgenerationwithkmeansdialog.h"
 #include "depthmapgenerationwithknndialog.h"
+#include "visualworddialog.h"
 #include "pyramiddialog.h"
 #include "patchesdialog.h"
 #include "informationpanel.h"
+#include "visualwordtestdialog.h"
 
 using namespace cv;
 
@@ -76,10 +79,16 @@ private slots:
 
     void on_actionPatches_triggered();
 
+    void on_actionVisual_Word_Training_triggered();
+
+    void on_actionVisual_Word_Test_triggered();
+
 private:
     Ui::MainWindow *ui;
     DepthMapGenerationWithKmeansDialog *depthMapGenerationWithKmeansDlg;
     DepthMapGenerationWithKNNDialog *depthMapGenerationWithKNNDlg;
+    VisualWordDialog *visualWordDlg;
+    VisualWordTestDialog *visualWordTestDlg;
     PyramidDialog *pyramidDlg;
     PatchesDialog *patchesDlg;
     InformationPanel *informationOutput;

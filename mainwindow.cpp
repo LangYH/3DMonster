@@ -25,10 +25,12 @@ MainWindow::MainWindow(QWidget *parent) :
 
     informationOutput = new InformationPanel(this);
 
-    lastPath = "/home/lang/Pictures/";
+    lastPath = "/home/lang/dataset/NYUDataset/images";
     DIBRHelper = new ConvertDialogHelper();
     depthMapGenerationWithKmeansDlg = NULL;
     depthMapGenerationWithKNNDlg = NULL;
+    visualWordDlg = NULL;
+    visualWordTestDlg = NULL;
     pyramidDlg = NULL;
     patchesDlg = NULL;
 
@@ -49,9 +51,15 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->ImView->setContextMenuPolicy( Qt::ActionsContextMenu );
     //*****************************************************************
 
+
+    //connect database: imageset
+    db = DatabaseManager::createConnection( "QPSQL","localhost","imageset","lang","lang");
+    if( !db.isOpen() )
+        exit(1);
+
     QFont statusBarFont("Times", 15, QFont::Bold );
     statusBar()->setFont( statusBarFont );
-    statusBar()->showMessage("Open image to start processing", 0 );
+    statusBar()->showMessage("Open image to start processing" );
 
     showMaximized();
     informationOutput->move( this->width(), this->height() );
@@ -59,6 +67,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    if( db.isOpen() ){
+        db.close();
+    }
     delete informationOutput;
     delete DIBRHelper;
     delete ui;
@@ -66,9 +77,12 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_action_Open_triggered()
 {
-    QString filename = QFileDialog::getOpenFileName( this, tr( "Open Image"), lastPath, tr("Image Files (*.png *.jpg *.jpeg *.bmp)"));
+    QString filename = QFileDialog::getOpenFileName( this, tr( "Open Image"), lastPath,
+                                            tr("Image Files (*.png *.jpg *.jpeg *.bmp *.yaml)"));
 
     lastPath = QFileInfo( filename ).absolutePath();
+
+    //QString filename = QFileDialog::getOpenFileName( this, tr( "Open Image"), ".", tr("Image Files (*.png *.jpg *.jpeg *.bmp)"));
 
     Mat image;
 
@@ -78,14 +92,21 @@ void MainWindow::on_action_Open_triggered()
     }
     else
     {
-        image = imread( filename.toLocal8Bit().data() );
+        if( QFileInfo(filename).suffix() == "yaml" ){
+            FileStorage fs;
+            if( fs.open( filename.toLocal8Bit().data(), FileStorage::READ ) ){
+                fs[ "depth" ] >> image;
+            }
+            fs.release();
+        }else{
+            image = imread( filename.toLocal8Bit().data() );
+        }
     }
-
 
     if( !image.empty() )
     {
         ui->ImView->setPaintImage(image);
-        statusBar()->showMessage( filename + QString( " loaded!"), 3000 );
+        statusBar()->showMessage( filename + QString( " loaded!") );
     }
 
 }
@@ -143,9 +164,9 @@ void MainWindow::on_actionSVM_triggered()
             Mat sampleMat = ( Mat_<float>( 1, 2 ) << j, i );
             float response = SVM.predict( sampleMat );
 
-            if( response == 1 )
+            if( response == 1.0 )
                 image.at<Vec3b>( i, j ) = green;
-            else if( response == -1 )
+            else if( response == -1.0 )
                 image.at<Vec3b>( i, j ) = blue;
         }
     }
@@ -155,7 +176,21 @@ void MainWindow::on_actionSVM_triggered()
     circle( image, Point( 501, 10 ), 5, Scalar( 0, 0, 0 ), thickness, lineType );
     circle( image, Point(255,10  ), 5, Scalar(255,255,255 ), thickness, lineType );
     circle( image, Point( 501, 255 ), 5, Scalar( 255,255,255), thickness, lineType );
-    circle( image, Point(10, 501  ), 5, Scalar( 255,255,255), thickness, lineType );
+    circle( image, Point( 10, 501  ), 5, Scalar( 255,255,255), thickness, lineType );
+
+    //test
+    Mat sample1 = ( Mat_<float>(1,2) << 510, 10 );
+    Mat sample2 = ( Mat_<float>(1,2) << 520, 10 );
+    Mat sample3 = ( Mat_<float>(1,2) << 180, 10 );
+    Mat sample4 = ( Mat_<float>(1,2) << 190, 10 );
+    float score1 = SVM.predict( sample1, true );
+    std::cout << "The score of ( 510, 10 ) is : " << score1 << std::endl;
+    float score2 = SVM.predict( sample2, true );
+    std::cout << "The score of ( 520, 10 ) is : " << score2 << std::endl;
+    float score3 = SVM.predict( sample3, true );
+    std::cout << "The score of ( 180, 10 ) is : " << score3 << std::endl;
+    float score4 = SVM.predict( sample4, true );
+    std::cout << "The score of ( 190, 10 ) is : " << score4 << std::endl;
 
     //show support vectors
     thickness = 2;
@@ -164,7 +199,7 @@ void MainWindow::on_actionSVM_triggered()
 
     for( int i = 0; i< c; i++ ){
         const float* v = SVM.get_support_vector(i);
-        circle( image, Point( (int)v[0], (int)v[1] ), 6, Scalar( 128,128,128), thickness, lineType );
+        circle( image, Point( (int)v[0], (int)v[1] ), 6, Scalar( 0, 0, 255), thickness, lineType );
     }
 
     ui->ImView->setPaintImage( image );
@@ -232,130 +267,130 @@ void MainWindow::on_actionDFT_triggered()
 
 void MainWindow::on_actionTest_triggered()
 {
-    Mat img_1 = ui->ImView->getCurrentImage();
-    Mat img_2 = ui->ImView->getSecondImage();
+    //Mat img_1 = ui->ImView->getCurrentImage();
+    //Mat img_2 = ui->ImView->getSecondImage();
 
-    if( !img_1.data || !img_2.data ){
-        return;
-    }
-    int minHessian = 400;
+    //if( !img_1.data || !img_2.data ){
+    //    return;
+    //}
+    //int minHessian = 400;
 
-    SurfFeatureDetector detector( minHessian );
+    //SurfFeatureDetector detector( minHessian );
 
-    std::vector<KeyPoint> keypoints_1, keypoints_2;
+    //std::vector<KeyPoint> keypoints_1, keypoints_2;
 
-    detector.detect( img_1, keypoints_1 );
-    detector.detect( img_2, keypoints_2 );
+    //detector.detect( img_1, keypoints_1 );
+    //detector.detect( img_2, keypoints_2 );
 
-    //--Step2:Calculate descriptors( feature vectors )
-    SurfDescriptorExtractor extractor;
+    ////--Step2:Calculate descriptors( feature vectors )
+    //SurfDescriptorExtractor extractor;
 
-    Mat descriptors_1, descriptors_2;
+    //Mat descriptors_1, descriptors_2;
 
-    extractor.compute( img_1, keypoints_1,  descriptors_1);
-    extractor.compute( img_2, keypoints_2, descriptors_2);
+    //extractor.compute( img_1, keypoints_1,  descriptors_1);
+    //extractor.compute( img_2, keypoints_2, descriptors_2);
 
-    //--step 3:Matching descriptor vectors with brute force mathcher
-    BFMatcher matcher( NORM_L2 );
-    std::vector< DMatch > matches;
-    matcher.match( descriptors_1, descriptors_2, matches );
+    ////--step 3:Matching descriptor vectors with brute force mathcher
+    //BFMatcher matcher( NORM_L2 );
+    //std::vector< DMatch > matches;
+    //matcher.match( descriptors_1, descriptors_2, matches );
 
-    //--Draw mathces
-    Mat img_matches;
-    drawMatches( img_1, keypoints_1, img_2, keypoints_2, matches, img_matches );
-    ui->ImView->setPaintImage( img_matches );
+    ////--Draw mathces
+    //Mat img_matches;
+    //drawMatches( img_1, keypoints_1, img_2, keypoints_2, matches, img_matches );
+    //ui->ImView->setPaintImage( img_matches );
 
 
 }
 
 void MainWindow::on_actionObject_detect_triggered()
 {
-    Mat img_color_1 = ui->ImView->getCurrentImage();
-    Mat img_color_2 = ui->ImView->getSecondImage();
+    //Mat img_color_1 = ui->ImView->getCurrentImage();
+    //Mat img_color_2 = ui->ImView->getSecondImage();
 
-    if( !img_color_1.data || !img_color_2.data ){
-        return;
-    }
+    //if( !img_color_1.data || !img_color_2.data ){
+    //    return;
+    //}
 
-    Mat img_1, img_2;
-    cvtColor( img_color_1, img_1, CV_RGB2GRAY );
-    cvtColor( img_color_2, img_2, CV_RGB2GRAY );
+    //Mat img_1, img_2;
+    //cvtColor( img_color_1, img_1, CV_RGB2GRAY );
+    //cvtColor( img_color_2, img_2, CV_RGB2GRAY );
 
-    int minHessian = 400;
+    //int minHessian = 400;
 
-    SurfFeatureDetector detector(minHessian);
+    //SurfFeatureDetector detector(minHessian);
 
-    std::vector<KeyPoint> keypoints_1, keypoints_2;
-    detector.detect( img_1, keypoints_1 );
-    detector.detect( img_2, keypoints_2 );
+    //std::vector<KeyPoint> keypoints_1, keypoints_2;
+    //detector.detect( img_1, keypoints_1 );
+    //detector.detect( img_2, keypoints_2 );
 
-    SurfDescriptorExtractor extractor;
+    //SurfDescriptorExtractor extractor;
 
-    Mat descriptors_1, descriptors_2;
+    //Mat descriptors_1, descriptors_2;
 
-    extractor.compute( img_1, keypoints_1, descriptors_1 );
-    extractor.compute( img_2, keypoints_2, descriptors_2 );
+    //extractor.compute( img_1, keypoints_1, descriptors_1 );
+    //extractor.compute( img_2, keypoints_2, descriptors_2 );
 
-    FlannBasedMatcher matcher;
-    std::vector<DMatch> matches;
-    matcher.match( descriptors_1, descriptors_2, matches );
+    //FlannBasedMatcher matcher;
+    //std::vector<DMatch> matches;
+    //matcher.match( descriptors_1, descriptors_2, matches );
 
-    //--Quick calculation of max and min distance between keypoints
-    double max_dist = 0; double min_dist = 100;
-    for( int i = 0; i < descriptors_1.rows; i++ ){
-        double dist = matches[i].distance;
-        if( dist < min_dist ) min_dist = dist;
-        if( dist > max_dist ) max_dist = dist;
+    ////--Quick calculation of max and min distance between keypoints
+    //double max_dist = 0; double min_dist = 100;
+    //for( int i = 0; i < descriptors_1.rows; i++ ){
+    //    double dist = matches[i].distance;
+    //    if( dist < min_dist ) min_dist = dist;
+    //    if( dist > max_dist ) max_dist = dist;
 
-    }
+    //}
 
-    printf( "--Max dist: %f \n", max_dist );
-    printf( "--Min dist: %f \n", min_dist );
+    //printf( "--Max dist: %f \n", max_dist );
+    //printf( "--Min dist: %f \n", min_dist );
 
-    std::vector< DMatch > good_matches;
+    //std::vector< DMatch > good_matches;
 
-    for( int i = 0; i < descriptors_1.rows; i++ ){
-        if( matches[i].distance <= 3*min_dist ){
-            good_matches.push_back( matches[i]);
-        }
-    }
-    Mat img_matches;
-    drawMatches( img_1, keypoints_1, img_2, keypoints_2, good_matches, img_matches,
-                Scalar::all(-1), Scalar::all(-1), vector<char>(),
-                DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
+    //for( int i = 0; i < descriptors_1.rows; i++ ){
+    //    if( matches[i].distance <= 3*min_dist ){
+    //        good_matches.push_back( matches[i]);
+    //    }
+    //}
+    //Mat img_matches;
+    //drawMatches( img_1, keypoints_1, img_2, keypoints_2, good_matches, img_matches,
+    //            Scalar::all(-1), Scalar::all(-1), vector<char>(),
+    //            DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
 
-    //localize the object
-    std::vector<Point2f> obj;
-    std::vector<Point2f> scene;
+    ////localize the object
+    //std::vector<Point2f> obj;
+    //std::vector<Point2f> scene;
 
-    for( int i = 0; i < int(good_matches.size()); i++ ){
-        //get the keypoints from the good matches
-        obj.push_back( keypoints_1[ good_matches[i].queryIdx ].pt );
-        scene.push_back( keypoints_2[ good_matches[i].trainIdx ].pt);
-    }
+    //for( int i = 0; i < int(good_matches.size()); i++ ){
+    //    //get the keypoints from the good matches
+    //    obj.push_back( keypoints_1[ good_matches[i].queryIdx ].pt );
+    //    scene.push_back( keypoints_2[ good_matches[i].trainIdx ].pt);
+    //}
 
-    Mat H = findHomography( obj, scene, CV_RANSAC );
+    //Mat H = findHomography( obj, scene, CV_RANSAC );
 
-    //--get the coners from the image_1( the object to be detected )
-    std::vector<Point2f> obj_coners(4);
-    obj_coners[0] = cvPoint( 0, 0 );
-    obj_coners[1] = cvPoint( img_1.cols, 0 );
-    obj_coners[2] = cvPoint( img_1.cols, img_1.rows );
-    obj_coners[3] = cvPoint( 0, img_1.rows );
-    std::vector<Point2f> scene_coners(4);
+    ////--get the coners from the image_1( the object to be detected )
+    //std::vector<Point2f> obj_coners(4);
+    //obj_coners[0] = cvPoint( 0, 0 );
+    //obj_coners[1] = cvPoint( img_1.cols, 0 );
+    //obj_coners[2] = cvPoint( img_1.cols, img_1.rows );
+    //obj_coners[3] = cvPoint( 0, img_1.rows );
+    //std::vector<Point2f> scene_coners(4);
 
-    perspectiveTransform( obj_coners, scene_coners, H );
-    //--Draw lines between the coners
-    line( img_matches, scene_coners[0] + Point2f( img_1.cols, 0 ), scene_coners[1]+Point2f(img_1.cols,0 ),
-            Scalar(0,255,0), 4);
-    line( img_matches, scene_coners[1] + Point2f( img_1.cols, 0 ), scene_coners[2]+Point2f(img_1.cols,0 ),
-            Scalar(0,255,0), 4);
-    line( img_matches, scene_coners[2] + Point2f( img_1.cols, 0 ), scene_coners[3]+Point2f(img_1.cols,0 ),
-            Scalar(0,255,0), 4);
-    line( img_matches, scene_coners[3] + Point2f( img_1.cols, 0 ), scene_coners[0]+Point2f(img_1.cols,0 ),
-            Scalar(0,255,0), 4);
+    //perspectiveTransform( obj_coners, scene_coners, H );
+    ////--Draw lines between the coners
+    //line( img_matches, scene_coners[0] + Point2f( img_1.cols, 0 ), scene_coners[1]+Point2f(img_1.cols,0 ),
+    //        Scalar(0,255,0), 4);
+    //line( img_matches, scene_coners[1] + Point2f( img_1.cols, 0 ), scene_coners[2]+Point2f(img_1.cols,0 ),
+    //        Scalar(0,255,0), 4);
+    //line( img_matches, scene_coners[2] + Point2f( img_1.cols, 0 ), scene_coners[3]+Point2f(img_1.cols,0 ),
+    //        Scalar(0,255,0), 4);
+    //line( img_matches, scene_coners[3] + Point2f( img_1.cols, 0 ), scene_coners[0]+Point2f(img_1.cols,0 ),
+    //        Scalar(0,255,0), 4);
 
-    ui->ImView->setPaintImage( img_matches );
+    //ui->ImView->setPaintImage( img_matches );
 
 
 }
@@ -375,9 +410,9 @@ void MainWindow::on_actionConnect_database_triggered()
         return;
     }
     if( !db.isOpen() ){
-        statusBar()->showMessage( tr("Open database failed!" ), 3000 );
+        statusBar()->showMessage( tr("Open database failed!" ) );
     } else {
-        statusBar()->showMessage( tr( "Open database successfully!" ), 3000 );
+        statusBar()->showMessage( tr( "Open database successfully!" ) );
     }
 
 }
@@ -387,7 +422,7 @@ void MainWindow::on_actionClose_database_triggered()
     if( db.isOpen() ){
         db.close();
     }
-    statusBar()->showMessage( tr( "Database closed!"), 3000 );
+    statusBar()->showMessage( tr( "Database closed!") );
 }
 
 void MainWindow::on_actionCross_bilateral_triggered()
@@ -419,7 +454,7 @@ void MainWindow::on_actionCross_bilateral_triggered()
         filters.crossBilateralFilter( im, mask, result, wsize, sigma_space, sigma_value );
         ui->ImView->setPaintImage( result );
         statusBar()->showMessage( tr("cross bilateral filtering elapsed with: ")
-                                        + QString::number( timer.elapsed() / 1000.0 ) + " seconds\n", 3000 );
+                                        + QString::number( timer.elapsed() / 1000.0 ) + " seconds\n" );
 
     }
 
@@ -454,7 +489,7 @@ void MainWindow::on_actionGuided_Filter_triggered()
         ui->ImView->setPaintImage( result );
 
         statusBar()->showMessage( tr("guided filtering elapsed with: ") +
-                QString::number( timer.elapsed() / 1000.0 ) + " seconds\n", 3000  );
+                QString::number( timer.elapsed() / 1000.0 ) + " seconds\n" );
     }
 
 }
@@ -472,7 +507,7 @@ void MainWindow::on_actionSet_as_DIBR_image_triggered()
         return;
 
     DIBRHelper->setInputImage( ui->ImView->getCurrentImage() );
-    statusBar()->showMessage( tr("DIBR image set!"), 3000 );
+    statusBar()->showMessage( tr("DIBR image set!") );
 }
 
 void MainWindow::on_actionSet_as_DIBR_depthmap_triggered()
@@ -481,7 +516,7 @@ void MainWindow::on_actionSet_as_DIBR_depthmap_triggered()
         return;
 
     DIBRHelper->setDepthImage( ui->ImView->getCurrentImage() );
-    statusBar()->showMessage( tr("DIBR depthmap set!"), 3000 );
+    statusBar()->showMessage( tr("DIBR depthmap set!") );
 }
 
 void MainWindow::on_actionDepthMap_generation_kmeans_triggered()
@@ -578,5 +613,34 @@ void MainWindow::on_actionPatches_triggered()
     patchesDlg->show();
     patchesDlg->raise();
     patchesDlg->activateWindow();
+
+}
+
+void MainWindow::on_actionVisual_Word_Training_triggered()
+{
+    if( !visualWordDlg ){
+        visualWordDlg = new VisualWordDialog(this);
+        visualWordDlg->setMainWindowUi( ui );
+        visualWordDlg->setDatabase( &db );
+    }
+
+    visualWordDlg->show();
+    visualWordDlg->raise();
+    visualWordDlg->activateWindow();
+
+
+}
+
+void MainWindow::on_actionVisual_Word_Test_triggered()
+{
+    if( !visualWordTestDlg ){
+        visualWordTestDlg = new VisualWordTestDialog(this);
+        visualWordTestDlg->setMainWindowUi( ui );
+        visualWordTestDlg->setDatabase( &db );
+    }
+
+    visualWordTestDlg->show();
+    visualWordTestDlg->raise();
+    visualWordTestDlg->activateWindow();
 
 }

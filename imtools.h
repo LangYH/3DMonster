@@ -9,6 +9,7 @@
 
 using namespace cv;
 
+typedef double ElementType;
 
 
 class imtools
@@ -36,6 +37,10 @@ public:
     static void computeHOGDescriptorsMat(Mat &descriptorMat,
                                          const QStringList &imPath, const HOGDescriptor *hogDesr);
 
+    static void computeHOGDescriptorsMat(Mat &descriptorMat,
+                                  const std::vector<Mat> patches,
+                                  const HOGDescriptor *hogDesr);
+
     //get all the depthmap from depthlist, store in depthMaps
     static void getDepthMapsFromDepthlist(vector<Mat> &depthMaps,
                                           QStringList const &depthlist );
@@ -43,6 +48,9 @@ public:
     //compute the gradient energy of the input matrix
     //for a smooth area, it give a small value
     static double computeGradientEnergyWithHOG(const Mat &patch);
+
+    static void idxSort(const std::vector<double> data, std::vector<int> &sorted_index , bool reverse = false );
+    static void idxSort(ElementType Data[], int SortedIndex[], int N);
 };
 
 #endif // IMTOOLS_H

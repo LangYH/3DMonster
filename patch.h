@@ -15,6 +15,11 @@ public:
     Patch( int patchSize );
     ~Patch();
 
+    //get patches for given information
+    static void getPatchForGivenCoordinates(const Mat &image, Mat &patches,
+                                   int octaves, int octave_layers, double sigma,
+                                   const Point coor, const int layer );
+
     //sample patches in pyramids:version 1
     void randomSamplePatchesInPyramid(const Mat image, std::vector<Mat> &pyrs, std::vector<std::vector<Mat> > &patches_array, std::vector<std::vector<Point> > &coordinates_array,
                                       int octaves, int octaveLayers, double sigma,

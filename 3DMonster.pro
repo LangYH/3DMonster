@@ -13,6 +13,7 @@ TARGET = 3DMonster
 TEMPLATE = app
 
 
+
 SOURCES += main.cpp\
         mainwindow.cpp \
     databasemanager.cpp \
@@ -38,7 +39,13 @@ SOURCES += main.cpp\
     depthmapgenerationwithknndialog.cpp \
     imageresizedialog.cpp \
     pyramiddialog.cpp \
-    patchesdialog.cpp
+    patchesdialog.cpp \
+    visualworddialog.cpp \
+    visualworddictionary.cpp \
+    depthmakerwithvisualword.cpp \
+    visualword2.cpp \
+    visualwordtestdialog.cpp \
+    visualworddictionary2.cpp
 
 HEADERS  += mainwindow.h \
     databasemanager.h \
@@ -64,7 +71,14 @@ HEADERS  += mainwindow.h \
     depthmapgenerationwithknndialog.h \
     imageresizedialog.h \
     pyramiddialog.h \
-    patchesdialog.h
+    patchesdialog.h \
+    visualworddialog.h \
+    visualworddictionary.h \
+    depthmakerwithvisualword.h \
+    visualword2.h \
+    CustomType.h \
+    visualwordtestdialog.h \
+    visualworddictionary2.h
 
 FORMS    += mainwindow.ui \
     connectdatabasedialog.ui \
@@ -75,7 +89,9 @@ FORMS    += mainwindow.ui \
     depthmapgenerationwithknndialog.ui \
     imageresizedialog.ui \
     pyramiddialog.ui \
-    patchesdialog.ui
+    patchesdialog.ui \
+    visualworddialog.ui \
+    visualwordtestdialog.ui
 
 INCLUDEPATH += /usr/local/include/opencv
 LIBS += \
@@ -84,12 +100,14 @@ LIBS += \
 /usr/local/lib/libopencv_ml.so \
 /usr/local/lib/libopencv_imgproc.so \
 /usr/local/lib/libopencv_features2d.so \
-/usr/local/lib/libopencv_nonfree.so \
 /usr/local/lib/libopencv_flann.so \
 /usr/local/lib/libopencv_calib3d.so \
 /usr/local/lib/libopencv_ml.so \
 /usr/local/lib/libopencv_gpu.so \
 /usr/local/lib/libopencv_objdetect.so \
+
+QMAKE_CXXFLAGS += -fopenmp
+LIBS += -fopenmp
 
 OTHER_FILES += \
     3DMonster.pro.user

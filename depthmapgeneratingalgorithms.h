@@ -22,6 +22,7 @@ public:
     //kNN search with HOG
     static void usingkNNWithHOG(Mat const &inputImage , Mat &finalDepthMap, int k);
     static void usingkmeansWithHOG(Mat const &inputImage, Mat &finalDepthMap , int k);
+    static void usingVisualWord( Mat const &inputImage, Mat &finalDepthMap );
 };
 
 

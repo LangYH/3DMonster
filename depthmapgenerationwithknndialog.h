@@ -2,11 +2,11 @@
 #define DEPTHMAPGENERATIONWIHTKNNDIALOG_H
 
 #include <QDialog>
-#include "ui_mainwindow.h"
 #include "informationpanel.h"
 
 namespace Ui {
 class DepthMapGenerationWithKNNDialog;
+class MainWindow;
 }
 
 class DepthMapGenerationWithKNNDialog : public QDialog

@@ -1,6 +1,7 @@
 ﻿#include "patchesdialog.h"
 #include "ui_patchesdialog.h"
 #include <QMessageBox>
+#include "ui_mainwindow.h"
 
 PatchesDialog::PatchesDialog(QWidget *parent) :
     QDialog(parent),
@@ -29,9 +30,6 @@ void PatchesDialog::setOutputPanel( InformationPanel *panel )
 void PatchesDialog::setDatabase( QSqlDatabase *database )
 {
     db = database;
-    if( patchExtracter != NULL ){
-        delete patchExtracter;
-    }
 }
 
 void PatchesDialog::on_patchSampleButton_clicked()

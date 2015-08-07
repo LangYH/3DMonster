@@ -1,6 +1,7 @@
 ﻿#include "statistic.h"
 #include "opencv2/imgproc/imgproc.hpp"
 #include <iostream>
+#include <opencv2/objdetect/objdetect.hpp>
 
 Statistic::Statistic()
 {
@@ -152,6 +153,39 @@ double Statistic::computeCrossDeviation( const Mat &matrix1, const Mat &matrix2 
 
 }
 
+double Statistic::computePersonSimlarity( const Mat &matrix1, const Mat &matrix2 )
+{
+    //compute Person relation coefficient
+    CV_Assert( matrix1.rows == matrix2.rows && matrix1.cols == matrix2.cols );
+    double sumXY = 0.0;
+    double sumX = 0.0;
+    double sumY = 0.0;
+    double sumXsquare = 0.0;
+    double sumYsquare = 0.0;
+
+    int nr = matrix1.rows;
+    int nc = matrix1.cols * matrix1.channels();
+    for( int i = 0; i < nr; i++ ){
+        const uchar* data1 = matrix1.ptr<uchar>(i);
+        const uchar* data2 = matrix2.ptr<uchar>(i);
+        for( int j = 0; j < nc; j++ ){
+            sumXY += *data1 * *data2;
+            sumX += *data1;
+            sumY += *data2;
+            sumXsquare += std::pow( *data1, 2. );
+            sumYsquare += std::pow( *data2, 2. );
+            data1++;
+            data2++;
+        }
+    }
+
+    double n = nr * nc;
+    double r = ( sumXY - sumX * sumY / n ) /
+            std::sqrt( (( sumXsquare - std::pow(sumX, 2.) / n ) * ( sumYsquare - std::pow(sumY, 2.) / n ) ) );
+    return r;
+
+}
+
 double Statistic::computeMeanValue( const Mat &patch ){
     int nbr_pixels = patch.total() * patch.channels();
 
@@ -234,4 +268,37 @@ double Statistic::computeCosineDistance( const Mat &patch1, const Mat &patch2 )
 
     return cos_angle;
 
+}
+
+double Statistic::computeDeviationOfMatrixes(const std::vector<Mat> &patches)
+{
+    if( patches.size() == 0 )
+        return -1.0;
+
+    std::vector<Mat> descrs;
+    for( unsigned i = 0; i < patches.size(); i++ ){
+        Mat temp;
+        equalizeHist( patches[i], temp );
+        descrs.push_back( patches[i] );
+    }
+
+    //compute mean vector
+    Mat mean_vector = descrs[0].clone();
+    for( unsigned i = 1; i < descrs.size(); i++ ){
+        mean_vector += descrs[i];
+    }
+    mean_vector /= double( descrs.size() );
+
+    //compute deviation
+    double sigma_2 = 0.0;
+    for( unsigned i = 0; i < descrs.size(); i++ ){
+        Mat t1, t2;
+        subtract( descrs[i], mean_vector, t1 );
+        multiply( t1, t1, t2 );
+        sigma_2 += cv::sum( t2 )[0];
+    }
+
+    double dev = std::sqrt( sigma_2 / descrs.size() );
+
+    return dev;
 }

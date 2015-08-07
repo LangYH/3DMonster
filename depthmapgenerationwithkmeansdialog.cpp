@@ -3,6 +3,7 @@
 #include "imtools.h"
 #include <QElapsedTimer>
 #include <QMessageBox>
+#include "ui_mainwindow.h"
 
 DepthMapGenerationWithKmeansDialog::DepthMapGenerationWithKmeansDialog(QWidget *parent) :
     QDialog(parent),
@@ -14,6 +15,8 @@ DepthMapGenerationWithKmeansDialog::DepthMapGenerationWithKmeansDialog(QWidget *
 
 DepthMapGenerationWithKmeansDialog::~DepthMapGenerationWithKmeansDialog()
 {
+    if( searcher != NULL )
+        delete searcher;
     //delete informationOutput;
     delete ui;
 }
@@ -53,7 +56,8 @@ void DepthMapGenerationWithKmeansDialog::on_generateButton_clicked()
                                   "You should train the kmeans searcher first" );
         return;
     }
-    int classNum = searcher->classify( ui_mainWindow->ImView->getCurrentImage() );
+    Mat img = ui_mainWindow->ImView->getCurrentImage() ;
+    int classNum = searcher->classify( img );
     QString info = "this image belongs to " + QString::number(classNum) + " class";
     QString elapes = "elapsed time with " +
             QString::number( timer.elapsed()/1000.0 ) + tr( " s" );

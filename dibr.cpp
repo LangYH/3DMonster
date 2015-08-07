@@ -109,12 +109,12 @@ Mat DIBR::creatLeftImage(Mat const image, Mat const left_movement )
 Mat DIBR::creatRedBlueImage( Mat const leftImage, Mat const rightImage )
 {
     Mat RedBlueImage( leftImage.size(), leftImage.type(), Scalar(0));
-    Mat inputImage[] = { leftImage, rightImage };
+    Mat inputImages[] = { leftImage, rightImage };
 
     //leftImage[0]->RedBlueImage[0]
     //rightImage[1]->RedBlueImage[1], rightImage[2]->RedBlueImage[2]
-    int from_to[] = { 2,2, 3,0, 4,1 };
-    mixChannels( inputImage, 2, &RedBlueImage, 1, from_to, 3);
+    int from_to[] = { 1,1, 3,0, 5,2 };
+    mixChannels( inputImages, 2, &RedBlueImage, 1, from_to, 3);
 
     return RedBlueImage;
 

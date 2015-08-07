@@ -3,22 +3,31 @@
 #include <iostream>
 #include "statistic.h"
 
+#define Cutoff ( 3 )
+
+
+typedef struct SortingEntry{
+    int index;
+    ElementType elem;
+} SortingEntry, *SortingEntryPtr;
+
 imtools::imtools()
 {
 }
 
 void imtools::matrixNormalize( Mat const &srcMat, Mat &dstMat )
 {
-    Mat temp;
-    srcMat.convertTo( temp, CV_64FC1 );
-    double minVal, maxVal;
-    minMaxLoc( temp, &minVal, &maxVal );
-    dstMat = (temp-minVal) / ( maxVal - minVal );
+    //Mat temp;
+    //srcMat.convertTo( temp, CV_32FC1 );
+    //double minVal, maxVal;
+    //minMaxLoc( temp, &minVal, &maxVal );
+    //dstMat = (temp-minVal) / ( maxVal - minVal );
+    normalize( srcMat, dstMat, 0, 1.0, NORM_MINMAX, CV_32FC1 );
 }
 
 void imtools::weightsNormalize(Mat &matrix)
 {
-    matrix.convertTo( matrix, CV_64FC1 );
+    matrix.convertTo( matrix, CV_32FC1 );
     matrix /= sum( matrix )[0];
 }
 
@@ -51,7 +60,7 @@ void imtools::getDepthMapsWithIndexes( Mat const &indexes, QStringList const &de
 
 void imtools::fuseDepthMaps( std::vector<Mat> const &depthMaps, const Mat &weights, Mat &fusedDepthMap)
 {
-    fusedDepthMap.create( depthMaps[0].size(), CV_64FC1);
+    fusedDepthMap.create( depthMaps[0].size(), CV_32FC1);
     fusedDepthMap = 0.0;
 
     for( int i = 0; i < int(depthMaps.size()); i++ ){
@@ -63,27 +72,49 @@ void imtools::fuseDepthMaps( std::vector<Mat> const &depthMaps, const Mat &weigh
 }
 
 void imtools::computeHOGDescriptorsMat(Mat &descriptorMat,
-                                       const QStringList &imPath , const HOGDescriptor *hogDesr)
+                                       const QStringList &imPath ,
+                                       const HOGDescriptor *hogDesr)
 {
     //compute all descriptors of training images
-    std::vector< std::vector<float> > imDescriptors;
-    foreach (QString fullImPath, imPath ) {
-        //for each file in imPath
-        Mat image = imread( fullImPath.toLocal8Bit().data(), CV_LOAD_IMAGE_GRAYSCALE );
-        std::vector<float> descr;
-        hogDesr->compute( image, descr, Size(0, 0 ), Size( 0, 0 ) );
-        imDescriptors.push_back( descr );
-    }
-   //---------------------------------------------
-
-   //transfer the data in vector<vector<float>> to a big Mat descriptorMat
-    descriptorMat.create( imPath.size(), imDescriptors[0].size(), CV_64FC1 );
+    //store in descriptorMat, for each row of it is a descriptor of one image
+    descriptorMat.create( imPath.size(), hogDesr->getDescriptorSize(), CV_32FC1 );
     int nr = descriptorMat.rows;
     int nc = descriptorMat.cols;
     for( int j=0; j<nr; j++ ){
-        double *data = descriptorMat.ptr<double>(j);
+        float *data = descriptorMat.ptr<float>(j);
+        Mat image = imread( imPath[j].toLocal8Bit().data(),
+                            CV_LOAD_IMAGE_GRAYSCALE );
+        std::vector<float> descr;
+        hogDesr->compute( image, descr, Size(0, 0 ), Size( 0, 0 ) );
         for( int i = 0; i < nc; i++ ){
-            *data++ = imDescriptors[j][i];
+            *data++ = descr[i];
+        }
+    }
+
+}
+
+void imtools::computeHOGDescriptorsMat(Mat &descriptorMat,
+                                       const std::vector<Mat> patches,
+                                       const HOGDescriptor *hogDesr)
+{
+    //compute all descriptors of training images
+    //store in descriptorMat, for each row of it is a descriptor of one image
+    descriptorMat.create( patches.size(), 900, CV_32FC1 );
+    int nr = descriptorMat.rows;
+    int nc = descriptorMat.cols;
+    for( int j=0; j<nr; j++ ){
+        float *data = descriptorMat.ptr<float>(j);
+
+        Mat image = patches.at(j).clone();
+
+        if( image.channels() == 3 ){
+            cvtColor( image, image, CV_BGR2GRAY );
+        }
+
+        std::vector<float> descr;
+        hogDesr->compute( patches.at(j), descr, Size(0, 0 ), Size( 0, 0 ) );
+        for( int i = 0; i < nc; i++ ){
+            *data++ = descr[i];
         }
     }
 
@@ -112,4 +143,122 @@ double imtools::computeGradientEnergyWithHOG( const Mat &patch )
     //return std::sqrt( gradient_energy );
     return deviation;
 
+}
+
+void imtools::idxSort( const std::vector<double> data, std::vector<int> &sorted_index,
+                       bool reverse )
+{
+    int N = data.size();
+
+    std::vector<int>().swap( sorted_index );
+    sorted_index.assign( N, -1 );
+
+    ElementType A[N];
+    for( int i = 0; i < N; i++ ){
+        A[i] = data[i];
+    }
+
+    int sorted_idx[N];
+    idxSort( A, sorted_idx, N );
+
+    for( int i = 0; i < N; i++ ){
+        if( reverse == true )
+            sorted_index[i] = sorted_idx[N-i-1];
+        else
+            sorted_index[i] = sorted_idx[i];
+    }
+}
+
+void Swap( SortingEntryPtr *a, SortingEntryPtr *b )
+{
+    SortingEntryPtr tmp;
+    tmp = *a;
+    *a = *b;
+    *b = tmp;
+}
+
+void insertSort( SortingEntryPtr A[], int N )
+{
+    int j, p;
+
+    SortingEntryPtr tmp;
+    for( p = 1; p < N; p++ ){
+        tmp = A[p];
+        for( j = p; j > 0 && A[j-1]->elem > tmp->elem; j-- )
+            A[j] = A[j-1];
+        A[j] = tmp;
+    }
+}
+
+ElementType median3( SortingEntryPtr A[], int left, int right )
+{
+    int center = ( left + right ) / 2;
+
+    if( A[left]->elem > A[center]->elem ){
+        Swap( &A[left], &A[center] );
+    }
+    if( A[left]->elem > A[right]->elem ){
+        Swap( &A[left], &A[right] );
+    }
+    if( A[center]->elem > A[right]->elem ){
+        Swap( &A[center], &A[right] );
+    }
+
+    Swap( &A[center], &A[right-1] );
+
+    return A[right-1]->elem;
+}
+
+void Qsort( SortingEntryPtr A[], int left, int right )
+{
+    int i, j;
+    ElementType pivot;
+
+    if( left + Cutoff <= right )
+    {
+        pivot = median3( A, left, right );
+        i = left;
+        j = right - 1;
+        for(;;){
+            while( A[++i]->elem < pivot )
+                ;
+            while( A[--j]->elem > pivot )
+                ;
+            if( i < j ){
+                Swap( &A[i], &A[j] );
+            }
+            else
+                break;
+        }
+        Swap( &A[i], &A[right-1] );
+
+        Qsort( A, left, i - 1 );
+        Qsort( A, i + 1, right );
+    }
+    else{
+        //insert sort
+        insertSort( A + left, right - left + 1 );
+
+    }
+}
+
+void imtools::idxSort( ElementType Data[], int SortedIndex[], int N )
+{
+    SortingEntryPtr A[N];
+    for( int i = 0; i < N; i++ ){
+        A[i] = (SortingEntryPtr)malloc( sizeof( SortingEntry ) );
+        if( A[i] == NULL ){
+            printf( "No space for sorting" );
+            exit(1);
+        }
+        A[i]->elem = Data[i];
+        A[i]->index = i;
+    }
+
+    Qsort( A, 0, N - 1 );
+
+    for( int i = 0; i < N; i++ ){
+        SortedIndex[i] = A[i]->index;
+        free( A[i] );
+    }
 }
