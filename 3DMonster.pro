@@ -44,7 +44,8 @@ SOURCES += main.cpp\
     visualworddictionary.cpp \
     depthmakerwithvisualword.cpp \
     visualword2.cpp \
-    visualwordtestdialog.cpp
+    visualwordtestdialog.cpp \
+    visualworddictionary2.cpp
 
 HEADERS  += mainwindow.h \
     databasemanager.h \
@@ -76,7 +77,8 @@ HEADERS  += mainwindow.h \
     depthmakerwithvisualword.h \
     visualword2.h \
     CustomType.h \
-    visualwordtestdialog.h
+    visualwordtestdialog.h \
+    visualworddictionary2.h
 
 FORMS    += mainwindow.ui \
     connectdatabasedialog.ui \

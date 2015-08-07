@@ -64,7 +64,64 @@ VisualWord2::~VisualWord2()
 void VisualWord2::loadDataFromDatabase()
 {
     DatabaseManager::loadVisualWordTrainingData( I1, I2, D1,D2,N1,N2);
+}
 
+void VisualWord2::trainVisualWordInitialization()
+{
+    //get all visual word IDs from database
+    QSqlQuery query;
+    QString command = "SELECT class_id"
+                      " FROM visual_word_3"
+                      " ORDER BY class_id";
+    CV_Assert( query.exec( command ) );
+
+    while( query.next() ){
+        visual_word_IDs.push_back( query.value("class_id").toInt() );
+    }
+
+    //get the corresponding patches cluster for each visual word
+    QString data_command = "SELECT class_path, image_path"
+                           " FROM visual_word_3"
+                           " WHERE class_id= :class_id;";
+    for( unsigned i = 0; i < visual_word_IDs.size(); i++ ){
+        int current_class_label = visual_word_IDs[i];
+        query.prepare( data_command );
+        query.bindValue(":class_id", current_class_label );
+        assert( query.exec() );
+
+        assert( query.first() );
+
+        QString class_path = query.value("class_path").toString();
+        QString image_path = query.value("image_path").toString();
+        QString cluster_path = class_path + QDir::separator() + image_path;
+        QDir cluster_dir( cluster_path );
+
+        QStringList current_cluster;
+        QStringList filters;
+        filters += "*.png";
+        foreach (QString file, cluster_dir.entryList( filters )) {
+            QString path = cluster_path + QDir::separator() + file;
+            current_cluster.push_back( path );
+        }
+
+        if( visual_word_patches.count( current_class_label ) == 0 ){
+            visual_word_patches[current_class_label] = current_cluster;
+        }
+        if( visual_word_paths.count( current_class_label ) == 0 ){
+            visual_word_paths[current_class_label] = class_path;
+        }
+    }
+    //load negative descriptor for training
+    FileStorage fs;
+    if( fs.open( FILE_NAME_DESCRIPTOR_NATURAL_SET1, FileStorage::READ ) ){
+        fs["N1"] >> negative_descriptor_1;
+    }
+    fs.release();
+
+    if( fs.open( FILE_NAME_DESCRIPTOR_NATURAL_SET2, FileStorage::READ ) ){
+        fs["N2"] >> negative_descriptor_2;
+    }
+    fs.release();
 }
 
 void VisualWord2::kmeansInitialization()
@@ -223,6 +280,26 @@ void VisualWord2::parallelTrain()
 
 }
 
+void VisualWord2::parallelTrainVisualWordDetector()
+{
+    trainVisualWordInitialization();
+    assert( visual_word_IDs.size() != 0 );
+    QString save_svm_path = "/home/lang/QtProject/build-3DMonster-Desktop_Qt_5_3_GCC_64bit-Debug/svmData/visual_word_detectors/";
+
+#pragma omp parallel
+    {
+#pragma omp for schedule( dynamic, 1 ) nowait
+        for( unsigned i = 0; i < visual_word_IDs.size();i++){
+            MySVM svm;
+            trainVisualWordDetector( visual_word_IDs[i], 2, svm );
+            QString svm_save_path = save_svm_path + "svm_detector_"
+                            + QString::number(visual_word_IDs[i]) + ".txt";
+            svm.save(svm_save_path.toLocal8Bit().data());
+        }
+    }
+
+}
+
 bool VisualWord2::trainOneSingleVisualWord( int class_label, int iterations, MySVM &svm )
 {
 
@@ -295,6 +372,42 @@ void VisualWord2::getPositiveSamplesForGivenID( int class_label,
     }
 }
 
+void VisualWord2::trainVisualWordDetector( int class_ID,
+                                           int iteration,
+                                           MySVM &svm )
+{
+    QStringList negative_image_list = N2;
+    //get the positive sample patches
+    std::vector<Mat> positive_patches;
+    foreach( QString path, visual_word_patches[class_ID] ){
+        Mat patch = imread( path.toLocal8Bit().data() );
+        positive_patches.push_back(patch);
+    }
+
+    Mat positive_descriptor_Mat;
+    imtools::computeHOGDescriptorsMat( positive_descriptor_Mat, positive_patches,
+                                       hog_descr );
+
+    Mat negative_descriptor_Mat;
+    getNegativeDescriptorForGivenStage( STAGE_FULL, negative_descriptor_Mat );
+
+    svmTrain( positive_descriptor_Mat, negative_descriptor_Mat, svm );
+
+    //hard examples mining
+    for( int i = 0; i < iteration; i++ ){
+        std::vector<Mat> hard_examples;
+        getHardExmaples( svm, negative_image_list, hard_examples );
+
+        if( hard_examples.size() > 0 ){
+            trainOneSVMDetectorWithHardExamples( positive_descriptor_Mat, negative_descriptor_Mat,
+                                                 hard_examples, hog_descr, svm );
+        }
+
+        std::vector<Mat>().swap( hard_examples );
+    }
+
+}
+
 void VisualWord2::trainOneSVMDetector( const std::vector<PatchInfo> &detect_depth_patches,
                           const QStringList &negative_image_list,
                           CROSS_VALIDATION_SYMBOL cv_symbol, MySVM &svm )
@@ -315,7 +428,7 @@ void VisualWord2::trainOneSVMDetector( const std::vector<PatchInfo> &detect_dept
 
     if( hard_examples.size() > 0 ){
         trainOneSVMDetectorWithHardExamples( positive_descriptor_Mat, negative_descriptor_Mat,
-                                             hard_examples, svm );
+                                             hard_examples, hog_descr, svm );
     }
 
     std::vector<Mat>().swap( hard_examples );
@@ -353,8 +466,14 @@ void VisualWord2::getNegativeDescriptorForGivenStage( CROSS_VALIDATION_SYMBOL cv
     if( cv_symbol == STAGE_ONE ){
         negative_descriptor_Mat = negative_descriptor_1;
     }
-    else{
+    else if( cv_symbol == STAGE_TWO ){
         negative_descriptor_Mat = negative_descriptor_2;
+    }
+    else if( cv_symbol == STAGE_FULL ){
+        negative_descriptor_Mat = negative_descriptor_1;
+    }
+    else{
+        return;
     }
 }
 
@@ -381,6 +500,7 @@ void VisualWord2::svmTrain( const Mat &positive_descriptor_Mat, const Mat &negat
 void VisualWord2::trainOneSVMDetectorWithHardExamples( const Mat &positive_descriptor_Mat,
                                           const Mat &negative_descriptor_Mat,
                                           const std::vector<Mat> &hard_examples,
+                                          HOGDescriptor *hog_descr,
                                           MySVM &svm )
 {
     CvSVMParams svm_params;

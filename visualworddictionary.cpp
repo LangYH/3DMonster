@@ -24,44 +24,6 @@ VisualWordDictionary::~VisualWordDictionary()
     cleanAllSVMClassifiers();
 }
 
-void VisualWordDictionary::searchImageForGivenWord(const Mat &image, MySVM &svm,
-                                                       std::vector<Rect> &filtered_result,
-                                                       std::vector<double> &filtered_scores )
-{
-    std::vector<float> myDetector;
-    getSVMDetectorForHOG( &svm, myDetector );
-
-    HOGDescriptor myHOG(Size(80,80),Size(8,8),Size(8,8), Size(8,8), 9 );
-    myHOG.setSVMDetector( myDetector );
-    //HOGDescriptor myHOG(Size(80,80),Size(8,8),Size(8,8), Size(8,8), 9 );
-    //myHOG.setSVMDetector( svm.get_primal_form() );
-
-    std::vector<Rect> found;
-    std::vector<double> scores;
-    //std::vector<Point> locs;
-
-    //myHOG.detect( image, found, scores, -0.8, Size(8,8), Size(0,0), locs );
-    myHOG.detectMultiScale( image, found, scores, -0.8, Size(8,8), Size(0,0), 1.05, 2, false );
-    //myHOG.detectMultiScale( image, filtered_result, filtered_scores, -0.8, Size(8,8), Size(0,0), 2.0, 2 );
-
-    for( unsigned i = 0; i < found.size(); i++ ){
-        Rect r = found[i];
-        if( r.x < 0 || r.y < 0 || ( r.x + r.width ) > image.cols
-                || ( r.y + r.height ) > image.rows ){
-            continue;
-        }
-        unsigned int j = 0;
-        for( ; j < found.size(); j++ )
-            if( j != i && ( r & found[j] ) == r )
-                break;
-
-        if( j == found.size() ){
-            filtered_result.push_back( r );
-            filtered_scores.push_back( scores[i]);
-        }
-    }
-}
-
 void VisualWordDictionary::loadNaturalImages()
 {
     //get all natural images
@@ -87,16 +49,9 @@ bool VisualWordDictionary::trainDictionary()
     return trainMultipleSVMClassifier();
 }
 
-bool VisualWordDictionary::loadDictionary()
-{
-    loadAllSVMClassifiers();
-    return true;
-}
-
 void VisualWordDictionary::prepareNegativeSamplesForMultipleSVMTraining(Mat &negativeDescriptorMat)
 {
 
-    //negativeDescriptorMat = N1;
 
     QString command = "SELECT class_path, image_path "
             " FROM visual_word"
@@ -136,8 +91,8 @@ void VisualWordDictionary::prepareNegativeSamplesForMultipleSVMTraining(Mat &neg
 
 bool VisualWordDictionary::trainMultipleSVMClassifier()
 {
-        QElapsedTimer timer;
-        timer.start();
+    QElapsedTimer timer;
+    timer.start();
     loadNaturalImages();
     //prepare negative samples, which are from natural image set
     Mat negative_descriptor_Mat;
@@ -236,8 +191,8 @@ bool VisualWordDictionary::trainMultipleSVMClassifier()
             //std::cout << "C:" << C << "		P:" << P << " 	gamma:" << gamma << std::endl;
         }
     }
-        std::cout << "Using time: " << timer.elapsed() / 1000.0
-                  << " seconds " << std::endl;
+    std::cout << "Using time: " << timer.elapsed() / 1000.0
+              << " seconds " << std::endl;
 
     return true;
 
@@ -453,4 +408,43 @@ int VisualWordDictionary::searchForId(const Mat &patch, double &score )
     score = best_match_score;
 
     return best_match_class_id;
+}
+
+void VisualWordDictionary::searchImageForGivenWord(const Mat &image, MySVM &svm,
+                                                       std::vector<Rect> &filtered_result,
+                                                       std::vector<double> &filtered_scores )
+{
+    std::vector<float> myDetector;
+    getSVMDetectorForHOG( &svm, myDetector );
+
+    HOGDescriptor myHOG(Size(80,80),Size(8,8),Size(8,8), Size(8,8), 9 );
+    myHOG.setSVMDetector( myDetector );
+
+    std::vector<Rect> found;
+    std::vector<double> scores;
+
+    myHOG.detectMultiScale( image, found, scores, -0.8, Size(8,8), Size(0,0), 1.05, 2, false );
+
+    for( unsigned i = 0; i < found.size(); i++ ){
+        Rect r = found[i];
+        if( r.x < 0 || r.y < 0 || ( r.x + r.width ) > image.cols
+                || ( r.y + r.height ) > image.rows ){
+            continue;
+        }
+        unsigned int j = 0;
+        for( ; j < found.size(); j++ )
+            if( j != i && ( r & found[j] ) == r )
+                break;
+
+        if( j == found.size() ){
+            filtered_result.push_back( r );
+            filtered_scores.push_back( scores[i]);
+        }
+    }
+}
+
+bool VisualWordDictionary::loadDictionary()
+{
+    loadAllSVMClassifiers();
+    return true;
 }

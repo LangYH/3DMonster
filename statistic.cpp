@@ -153,6 +153,39 @@ double Statistic::computeCrossDeviation( const Mat &matrix1, const Mat &matrix2 
 
 }
 
+double Statistic::computePersonSimlarity( const Mat &matrix1, const Mat &matrix2 )
+{
+    //compute Person relation coefficient
+    CV_Assert( matrix1.rows == matrix2.rows && matrix1.cols == matrix2.cols );
+    double sumXY = 0.0;
+    double sumX = 0.0;
+    double sumY = 0.0;
+    double sumXsquare = 0.0;
+    double sumYsquare = 0.0;
+
+    int nr = matrix1.rows;
+    int nc = matrix1.cols * matrix1.channels();
+    for( int i = 0; i < nr; i++ ){
+        const uchar* data1 = matrix1.ptr<uchar>(i);
+        const uchar* data2 = matrix2.ptr<uchar>(i);
+        for( int j = 0; j < nc; j++ ){
+            sumXY += *data1 * *data2;
+            sumX += *data1;
+            sumY += *data2;
+            sumXsquare += std::pow( *data1, 2. );
+            sumYsquare += std::pow( *data2, 2. );
+            data1++;
+            data2++;
+        }
+    }
+
+    double n = nr * nc;
+    double r = ( sumXY - sumX * sumY / n ) /
+            std::sqrt( (( sumXsquare - std::pow(sumX, 2.) / n ) * ( sumYsquare - std::pow(sumY, 2.) / n ) ) );
+    return r;
+
+}
+
 double Statistic::computeMeanValue( const Mat &patch ){
     int nbr_pixels = patch.total() * patch.channels();
 

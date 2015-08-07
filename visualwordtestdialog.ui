@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>248</width>
-    <height>111</height>
+    <height>144</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -22,13 +22,20 @@
     </widget>
    </item>
    <item row="1" column="0">
+    <widget class="QPushButton" name="visualWordDetectorTrainingButton">
+     <property name="text">
+      <string>VW detector training</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
     <widget class="QPushButton" name="testFuncButton">
      <property name="text">
       <string>Test Function</string>
      </property>
     </widget>
    </item>
-   <item row="2" column="0">
+   <item row="3" column="0">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>

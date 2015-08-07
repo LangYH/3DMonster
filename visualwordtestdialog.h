@@ -33,6 +33,7 @@ public:
 private slots:
     void on_visualWordTrainingButton_clicked();
     void on_testFuncButton_clicked();
+    void on_visualWordDetectorTrainingButton_clicked();
 };
 
 #endif // VISUALWORDTESTDIALOG_H

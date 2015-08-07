@@ -17,9 +17,16 @@ public:
     VisualWordDictionary();
     ~VisualWordDictionary();
 
-    bool trainDictionary();
 
+    //transforming part
     bool loadDictionary();
+
+    bool loadAllSVMClassifiers();
+
+    void cleanAllSVMClassifiers();
+
+    //training part
+    bool trainDictionary();
 
     void prepareNegativeSamplesForMultipleSVMTraining( Mat &negativeDescriptorMat );
 
@@ -29,13 +36,6 @@ public:
 
     void getHardExmaples(MySVM &svm, std::vector<Mat> &hard_examples);
 
-    bool loadAllSVMClassifiers();
-
-    void cleanAllSVMClassifiers();
-
-    //void searchImageForGivenWord( const Mat &image,
-    //                              MySVM &svm,
-    //                              std::vector<Rect> rect_founded );
 
 
     static void getSVMDetectorForHOG( MySVM *svm, std::vector<float> &myDetector );

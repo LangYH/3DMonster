@@ -84,6 +84,7 @@ void DatabaseManager::loadNYUData( QStringList &nyu_image_list,
         nyu_image_list.push_back( image_path );
         nyu_depth_list.push_back( depth_path );
     }
+
 }
 
 void DatabaseManager::loadNYUDepthData( QStringList &nyu_depth_list )

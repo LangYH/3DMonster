@@ -34,6 +34,8 @@ public:
     //compute deviation of given matrixes
     static double computeDeviationOfMatrixes( const std::vector<Mat> &patches );
 
+    //Person correlation coeficient
+    static double computePersonSimlarity(const Mat &matrix1, const Mat &matrix2);
 };
 
 #endif // STATISTIC_H
